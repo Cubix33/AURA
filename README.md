@@ -1,8 +1,8 @@
-# AURA — Menstrual & Hormonal Rhythm Intelligence
+# AURA — Menstrual & Hormonal Pattern Intelligence
 
-> *"Most period apps tell you: 'your period is coming in 4 days.' AURA tells you: 'that might explain why you've been feeling like this.' Less tracking. More understanding yourself."*
+> *"Why do I feel like this today? Log how you feel. AURA helps you spot patterns across your cycle."*
 
-AURA is a personalized rhythm tracker that helps women connect sudden changes in mood, appetite, energy, libido, and physical sensations directly to their menstrual cycle and past biological patterns.
+AURA is a personal rhythm tracker that helps women connect sudden changes in mood, appetite, energy, libido, and physical sensations directly to their menstrual cycle and past biological patterns.
 
 ---
 

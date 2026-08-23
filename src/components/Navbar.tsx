@@ -36,11 +36,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   AURA
                 </span>
                 <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-[#F5EAE4] text-[#8E3B22] hidden sm:inline-block">
-                  Rhythm Intelligence
+                  Cycle Sync & Insights
                 </span>
               </div>
               <p className="text-[11px] text-[#7A6F66] hidden md:block">
-                Less tracking. More understanding yourself.
+                Why do I feel like this today? Spot patterns across your cycle.
               </p>
             </div>
           </div>

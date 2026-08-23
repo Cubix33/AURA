@@ -231,13 +231,14 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
         <div className="absolute top-0 right-0 w-72 h-72 bg-[#F3E2D8]/40 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
 
         <div className="relative z-10">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
             <div>
-              <span className="text-xs font-bold tracking-widest uppercase text-[#A0887A]">
-                Daily Rhythm Check-in
+              <span className="text-xs font-bold tracking-widest uppercase text-[#8E3B22] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Cycle Sync & Insights
               </span>
               <h1 className="font-serif-editorial text-3xl md:text-4xl text-[#2B231F] font-normal mt-1">
-                How does your body feel today?
+                Why do I feel like this today?
               </h1>
             </div>
 
@@ -254,8 +255,8 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
             </div>
           </div>
 
-          <p className="text-[#695D54] text-sm md:text-base font-serif-editorial italic max-w-2xl">
-            "Most apps tell you your period is coming. AURA tells you why you're feeling like this."
+          <p className="text-[#5A4F46] text-sm md:text-base font-serif-editorial max-w-2xl leading-relaxed">
+            Log how you feel. AURA helps you spot patterns across your cycle and reveals why your body feels this way.
           </p>
 
           {/* Cycle Phase Visual Bar */}
@@ -371,9 +372,12 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
       <section className="space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-[#2B231F]">Log Your Signals</h2>
-            <p className="text-xs text-[#7A6F66]">
-              Tap one or multiple feelings. Upfront states shown for speed, expand "+ more" for details.
+            <div className="flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-[#2E2420] text-white text-[11px] font-bold flex items-center justify-center">1</span>
+              <h2 className="text-lg font-bold text-[#2B231F]">Tap what you feel right now</h2>
+            </div>
+            <p className="text-xs text-[#7A6F66] mt-0.5">
+              1-tap logging across 6 key states. Upfront options shown for instant check-in, expand "+ more" for details.
             </p>
           </div>
           {selectedFeelings.length > 0 && (
@@ -537,26 +541,70 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
         </div>
       </section>
 
-      {/* Real-time / Post-Save Pattern Insight Box */}
-      <AnimatePresence>
-        {activeInsight && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-[#2B231F] flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#8E3B22]" />
-                AURA Pattern Intelligence
-              </h2>
-              <span className="text-xs text-[#8A7D73]">Historical rhythm check across 3 cycles</span>
-            </div>
+      {/* Real-time / Post-Save Pattern Insight Section */}
+      <section className="space-y-4 pt-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-[#8E3B22] text-white text-[11px] font-bold flex items-center justify-center">2</span>
+            <h2 className="text-lg font-bold text-[#2B231F] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#8E3B22]" />
+              Cycle Sync & Insights
+            </h2>
+          </div>
+          <span className="text-xs text-[#8A7D73] font-medium hidden sm:inline-block">
+            Scanning 3 past cycles for Cycle Day {currentCycleDay} (±2 days)
+          </span>
+        </div>
 
-            <PatternInsightCard
-              insight={activeInsight}
-              onExploreRhythms={onExploreRhythms}
-              onViewReceipts={onViewReceipts}
-            />
-          </section>
-        )}
-      </AnimatePresence>
+        <AnimatePresence mode="wait">
+          {activeInsight ? (
+            <motion.div
+              key={activeInsight.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.3 }}
+            >
+              <PatternInsightCard
+                insight={activeInsight}
+                onExploreRhythms={onExploreRhythms}
+                onViewReceipts={onViewReceipts}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty-prompt"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="bg-white/80 rounded-2xl p-6 md:p-8 border border-dashed border-[#DDD3C7] text-center space-y-3"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-[#FAF5F0] border border-[#EAE0D5] flex items-center justify-center mx-auto text-[#8E3B22]">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="max-w-md mx-auto space-y-1">
+                <h3 className="font-serif-editorial text-xl text-[#2C2420]">
+                  Ready to interpret your day
+                </h3>
+                <p className="text-xs md:text-sm text-[#7A6F66] leading-relaxed">
+                  Tap any feelings above or choose a simulation preset to see what AURA has noticed across your past 3 cycles for Day {currentCycleDay}.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-[11px] text-[#8C7E74]">
+                <span className="px-2.5 py-1 bg-[#F7F3EE] rounded-full border border-[#E8E1D7]">
+                  🔍 Searching Cycle -1, -2, -3
+                </span>
+                <span className="px-2.5 py-1 bg-[#F7F3EE] rounded-full border border-[#E8E1D7]">
+                  🧬 Hormonal phase context
+                </span>
+                <span className="px-2.5 py-1 bg-[#F7F3EE] rounded-full border border-[#E8E1D7]">
+                  📋 Recurrence rate analysis
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
     </div>
   );
 };

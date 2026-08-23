@@ -211,19 +211,19 @@ export function detectPatterns(
   const symptomsFormatted = selectedLabels.join(', ').toLowerCase();
 
   if (matchedCyclesCount >= 3) {
-    headline = `You've felt ${symptomsFormatted} around this time in your last 3 cycles.`;
-    subheadline = `Consistent Day ${minDay}–${maxDay} pattern (${matchedCyclesCount}/${totalPastCyclesAnalyzed} cycles)`;
+    headline = `AURA noticed: You've felt ${symptomsFormatted} around this time in your last 3 cycles.`;
+    subheadline = `Recurring Day ${minDay}–${maxDay} pattern verified across ${matchedCyclesCount}/${totalPastCyclesAnalyzed} cycles`;
   } else if (matchedCyclesCount === 2) {
-    headline = `You also logged ${symptomsFormatted} around Cycle Day ${currentCycleDay} in 2 of your past cycles.`;
+    headline = `AURA noticed: You also logged ${symptomsFormatted} around Cycle Day ${currentCycleDay} in 2 of your past cycles.`;
     subheadline = `Emerging pattern spotted (${matchedCyclesCount}/${totalPastCyclesAnalyzed} cycles)`;
   } else if (matchedCyclesCount === 1) {
-    headline = `You logged similar sensations around this cycle window once before.`;
-    subheadline = `AURA is monitoring this emerging rhythm`;
+    headline = `AURA noticed: You logged similar sensations around this cycle window once before.`;
+    subheadline = `Single previous match · AURA is monitoring this emerging rhythm`;
   } else {
     headline = `AURA is still learning your patterns for this cycle window.`;
     subheadline = `Cycle Day ${currentCycleDay} · ${phaseName}`;
     if (!explanation) {
-      explanation = `Every cycle teaches AURA more about your unique rhythm. We've saved these sensations to your timeline.`;
+      explanation = `As you log across subsequent cycles, AURA links your recurring feelings to your unique hormonal shifts.`;
     }
   }
 

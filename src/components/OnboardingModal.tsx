@@ -69,10 +69,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             {isInitialSetup ? 'Welcome to AURA' : 'Cycle Profile Settings'}
           </div>
           <h2 className="font-serif-editorial text-3xl text-[#2B231F] font-normal">
-            {isInitialSetup ? 'Personal Rhythm Calibration' : 'Update Cycle Parameters'}
+            {isInitialSetup ? 'Why do I feel like this today?' : 'Update Cycle Parameters'}
           </h2>
           <p className="text-xs md:text-sm text-[#6E635A] mt-1">
-            AURA turns daily physical & emotional feelings into recurring hormonal pattern insights.
+            Log how you feel. AURA helps you spot recurring patterns across your cycle.
           </p>
         </div>
 
