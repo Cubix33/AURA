@@ -45,7 +45,7 @@ export const BodyReceiptsView: React.FC<BodyReceiptsViewProps> = ({
   ];
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto pb-16">
+    <div className="space-y-8 max-w-7xl mx-auto pb-16">
       {/* Header Banner */}
       <section className="bg-gradient-to-b from-white to-[#FAF6F0] rounded-3xl p-6 md:p-8 border border-[#EDE5DB] shadow-xs relative overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-4">

@@ -36,7 +36,7 @@ export const CycleHistoryLog: React.FC<CycleHistoryLogProps> = ({
   });
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-16">
+    <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* Header */}
       <section className="bg-white rounded-3xl p-6 md:p-8 border border-[#EDE5DB] shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-4">
