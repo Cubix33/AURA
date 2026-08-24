@@ -51,6 +51,7 @@ export default function App() {
   });
 
   const [currentTab, setCurrentTab] = useState<TabType>('today');
+  const [bodyMindSubTab, setBodyMindSubTab] = useState<'nutrition' | 'sexual_health' | 'mental_health' | 'red_flags'>('nutrition');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => !profile.onboardingCompleted);
   const [isDiscreetMode, setIsDiscreetMode] = useState<boolean>(false);
@@ -139,6 +140,18 @@ export default function App() {
             onExploreRhythms={() => setCurrentTab('rhythms')}
             onViewReceipts={() => setCurrentTab('receipts')}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onNavigateToTab={(tab, subTab) => {
+              setCurrentTab(tab);
+              if (
+                subTab &&
+                (subTab === 'nutrition' ||
+                  subTab === 'sexual_health' ||
+                  subTab === 'mental_health' ||
+                  subTab === 'red_flags')
+              ) {
+                setBodyMindSubTab(subTab);
+              }
+            }}
           />
         )}
 
@@ -151,7 +164,7 @@ export default function App() {
         )}
 
         {currentTab === 'body_mind' && (
-          <BodyAndMindView profile={profile} />
+          <BodyAndMindView profile={profile} initialSubTab={bodyMindSubTab} />
         )}
 
         {currentTab === 'rights_safety' && (

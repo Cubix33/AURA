@@ -32,10 +32,17 @@ import { calculateCycleDay, getCyclePhase, getPhaseDisplayName } from '../utils/
 
 interface BodyAndMindViewProps {
   profile: UserCycleProfile;
+  initialSubTab?: 'nutrition' | 'sexual_health' | 'mental_health' | 'red_flags';
 }
 
-export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile }) => {
-  const [activeTab, setActiveTab] = useState<'nutrition' | 'sexual_health' | 'mental_health' | 'red_flags'>('nutrition');
+export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initialSubTab = 'nutrition' }) => {
+  const [activeTab, setActiveTab] = useState<'nutrition' | 'sexual_health' | 'mental_health' | 'red_flags'>(initialSubTab);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveTab(initialSubTab);
+    }
+  }, [initialSubTab]);
 
   const todayStr = new Date().toISOString().split('T')[0];
   const currentCycleDay = calculateCycleDay(todayStr, profile.lastPeriodDate, profile.averageCycleLength);

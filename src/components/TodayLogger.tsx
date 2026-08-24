@@ -23,6 +23,7 @@ import { FEELING_BUCKETS } from '../data/feelingsData';
 import { BucketType, DailyLog, PatternInsight, UserCycleProfile } from '../types';
 import { calculateCycleDay, detectPatterns, getCyclePhase, getPhaseDescription, getPhaseDisplayName } from '../utils/patternEngine';
 import { PatternInsightCard } from './PatternInsightCard';
+import { TabType } from './Navbar';
 
 interface TodayLoggerProps {
   profile: UserCycleProfile;
@@ -31,6 +32,7 @@ interface TodayLoggerProps {
   onExploreRhythms: () => void;
   onViewReceipts: () => void;
   onOpenSettings: () => void;
+  onNavigateToTab?: (tab: TabType, subTab?: string) => void;
 }
 
 const BUCKET_CONFIG: Record<
@@ -93,6 +95,8 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
   onSaveLog,
   onExploreRhythms,
   onViewReceipts,
+  onOpenSettings,
+  onNavigateToTab,
 }) => {
   // Current active date string & simulated cycle day
   const [selectedDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
@@ -112,7 +116,6 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
   const [selectedFeelings, setSelectedFeelings] = useState<string[]>([]);
   const [notes, setNotes] = useState<string>(''); 
   const [activeInsight, setActiveInsight] = useState<PatternInsight | null>(null);
-  const [isSaved, setIsSaved] = useState<boolean>(false);
   const [isTestingPreset, setIsTestingPreset] = useState<boolean>(false);
   const [activePresetDay, setActivePresetDay] = useState<number | null>(null);
 
@@ -141,8 +144,6 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
     const existingLog = allLogs.find((l) => l.date === selectedDate || (l.cycleNumber === 0 && l.cycleDay === currentCycleDay));
     
     if (existingLog && existingLog.feelings.length > 0) {
-      setSelectedFeelings(existingLog.feelings);
-      setNotes(existingLog.notes || '');
       // Calculate pattern for existing saved logs
       const insight = detectPatterns(
         currentCycleDay,
@@ -152,18 +153,10 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
         profile.averagePeriodLength
       );
       setActiveInsight(insight);
-      setIsSaved(true);
-    } else {
-      setSelectedFeelings([]);
-      setNotes('');
-      setActiveInsight(null); // Hide when there is no saved log
-      setIsSaved(false);
     }
   }, [currentCycleDay, selectedDate, allLogs]);
 
   const toggleFeeling = (id: string) => {
-    setIsSaved(false);
-    setActiveInsight(null);
     setSelectedFeelings((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
@@ -203,7 +196,12 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
       profile.averagePeriodLength
     );
     setActiveInsight(insight);
-    setIsSaved(true);
+
+    // Clear selections and text box cleanly
+    setSelectedFeelings([]);
+    setNotes('');
+    setIsTestingPreset(false);
+    setActivePresetDay(null);
 
     if (insight.matchedCyclesCount >= 2) {
       try {
@@ -230,7 +228,6 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
     setCurrentCycleDay(day);
     setSelectedFeelings(feelings);
     setIsTestingPreset(true);
-    setIsSaved(false);
 
     // Auto-expand any buckets containing non-upfront feelings
     const newExpanded: Record<string, boolean> = { ...expandedBuckets };
@@ -255,7 +252,6 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
   const clearSelection = () => {
     setSelectedFeelings([]);
     setNotes('');
-    setIsSaved(false);
     setActiveInsight(null);
     setIsTestingPreset(false);
     setActivePresetDay(null);
@@ -327,46 +323,65 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
               )}
             </div>
 
-            {!isSaved ? (
-              <div className="space-y-4">
-                {/* Category Buckets: 2-column clean bento */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  {FEELING_BUCKETS.map((bucket) => {
-                    const isExpanded = !!expandedBuckets[bucket.id];
-                    const config = BUCKET_CONFIG[bucket.id];
-                    const upfrontItems = bucket.items.filter((item) => item.isUpfront);
-                    const moreItems = bucket.items.filter((item) => !item.isUpfront);
-                    const selectedInBucket = bucket.items.filter((item) => selectedFeelings.includes(item.id));
+            <div className="space-y-4">
+              {/* Category Buckets: 2-column clean bento */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {FEELING_BUCKETS.map((bucket) => {
+                  const isExpanded = !!expandedBuckets[bucket.id];
+                  const config = BUCKET_CONFIG[bucket.id];
+                  const upfrontItems = bucket.items.filter((item) => item.isUpfront);
+                  const moreItems = bucket.items.filter((item) => !item.isUpfront);
+                  const selectedInBucket = bucket.items.filter((item) => selectedFeelings.includes(item.id));
 
-                    return (
-                      <div
-                        key={bucket.id}
-                        className="rounded-xl p-3.5 border transition-all flex flex-col justify-between"
-                        style={{
-                          backgroundColor: selectedInBucket.length > 0 ? config.lightBg : '#FAF8F5',
-                          borderColor: selectedInBucket.length > 0 ? config.border : '#ECE4DA',
-                        }}
-                      >
-                        <div>
-                          {/* Bucket Title Row */}
-                          <div className="flex items-center justify-between mb-2.5">
-                            <div className="flex items-center gap-1.5">
-                              {config.icon}
-                              <h3 className="text-xs font-bold text-[#2C2420]">{bucket.title}</h3>
-                            </div>
-                            {selectedInBucket.length > 0 && (
-                              <span
-                                className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
-                                style={{ backgroundColor: config.border, color: config.textColor }}
-                              >
-                                {selectedInBucket.length}
-                              </span>
-                            )}
+                  return (
+                    <div
+                      key={bucket.id}
+                      className="rounded-xl p-3.5 border transition-all flex flex-col justify-between"
+                      style={{
+                        backgroundColor: selectedInBucket.length > 0 ? config.lightBg : '#FAF8F5',
+                        borderColor: selectedInBucket.length > 0 ? config.border : '#ECE4DA',
+                      }}
+                    >
+                      <div>
+                        {/* Bucket Title Row */}
+                        <div className="flex items-center justify-between mb-2.5">
+                          <div className="flex items-center gap-1.5">
+                            {config.icon}
+                            <h3 className="text-xs font-bold text-[#2C2420]">{bucket.title}</h3>
                           </div>
+                          {selectedInBucket.length > 0 && (
+                            <span
+                              className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
+                              style={{ backgroundColor: config.border, color: config.textColor }}
+                            >
+                              {selectedInBucket.length}
+                            </span>
+                          )}
+                        </div>
 
-                          {/* Chip Selectors */}
-                          <div className="flex flex-wrap gap-1.5">
-                            {upfrontItems.map((item) => {
+                        {/* Chip Selectors */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {upfrontItems.map((item) => {
+                            const isSelected = selectedFeelings.includes(item.id);
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => toggleFeeling(item.id)}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 cursor-pointer select-none ${
+                                  isSelected
+                                    ? 'bg-[#2B231F] text-white shadow-xs font-semibold'
+                                    : 'bg-white text-[#4A4038] border border-[#E2D8CC] hover:bg-[#F2ECE3] hover:border-[#D6CABF]'
+                                }`}
+                              >
+                                {isSelected && <Check className="w-2.5 h-2.5 stroke-[3] text-[#E89E86]" />}
+                                {item.label}
+                              </button>
+                            );
+                          })}
+
+                          {isExpanded &&
+                            moreItems.map((item) => {
                               const isSelected = selectedFeelings.includes(item.id);
                               return (
                                 <button
@@ -384,100 +399,69 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
                                 </button>
                               );
                             })}
-
-                            {isExpanded &&
-                              moreItems.map((item) => {
-                                const isSelected = selectedFeelings.includes(item.id);
-                                return (
-                                  <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => toggleFeeling(item.id)}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 cursor-pointer select-none ${
-                                      isSelected
-                                        ? 'bg-[#2B231F] text-white shadow-xs font-semibold'
-                                        : 'bg-white text-[#4A4038] border border-[#E2D8CC] hover:bg-[#F2ECE3] hover:border-[#D6CABF]'
-                                    }`}
-                                  >
-                                    {isSelected && <Check className="w-2.5 h-2.5 stroke-[3] text-[#E89E86]" />}
-                                    {item.label}
-                                  </button>
-                                );
-                              })}
-                          </div>
                         </div>
-
-                        {moreItems.length > 0 && (
-                          <div className="mt-2.5 pt-1.5 border-t border-black/5 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => toggleBucketExpand(bucket.id)}
-                              className="text-[10px] font-semibold text-[#7D6B5F] hover:text-[#3B2D24] flex items-center gap-0.5 cursor-pointer transition-colors"
-                            >
-                              {isExpanded ? (
-                                <>Show less <ChevronUp className="w-2.5 h-2.5" /></>
-                              ) : (
-                                <>+{moreItems.length} more <ChevronDown className="w-2.5 h-2.5" /></>
-                              )}
-                            </button>
-                          </div>
-                        )}
                       </div>
-                    );
-                  })}
-                </div>
 
-                {/* New Notes Text Box */}
-                <div className="pt-2">
-                  <label className="text-xs font-bold text-[#2C2420] mb-1.5 block">
-                    Additional Notes (Optional)
-                  </label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Jot down extra details, specific cravings, or triggers..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2D8CC] bg-[#FAF8F5] text-sm text-[#2C2420] focus:outline-none focus:ring-2 focus:ring-[#8E3B22]/20 focus:border-[#8E3B22] resize-none h-20"
-                  />
-                </div>
+                      {moreItems.length > 0 && (
+                        <div className="mt-2.5 pt-1.5 border-t border-black/5 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => toggleBucketExpand(bucket.id)}
+                            className="text-[10px] font-semibold text-[#7D6B5F] hover:text-[#3B2D24] flex items-center gap-0.5 cursor-pointer transition-colors"
+                          >
+                            {isExpanded ? (
+                              <>Show less <ChevronUp className="w-2.5 h-2.5" /></>
+                            ) : (
+                              <>+{moreItems.length} more <ChevronDown className="w-2.5 h-2.5" /></>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ) : (
-              /* Success state shown when buttons disappear */
-              <div className="bg-[#F5EAE4] p-5 rounded-xl text-center border border-[#E8D4C8] my-4">
-                <p className="text-[#8E3B22] font-serif-editorial text-lg mb-1">Your log has been saved! 🎉</p>
-                <p className="text-xs text-[#7A6F66]">
-                  Review your pattern insight on the right, or click <strong className="text-[#2C2420]">Reset</strong> above to edit today's entry.
-                </p>
+
+              {/* Notes Text Box */}
+              <div className="pt-2">
+                <label className="text-xs font-bold text-[#2C2420] mb-1.5 block">
+                  Additional Notes (Optional)
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Jot down extra details, specific cravings, or triggers..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2D8CC] bg-[#FAF8F5] text-sm text-[#2C2420] focus:outline-none focus:ring-2 focus:ring-[#8E3B22]/20 focus:border-[#8E3B22] resize-none h-20"
+                />
               </div>
-            )}
+            </div>
 
             {/* Save & Spot Patterns Button */}
-            {!isSaved && (
-              <div className="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#F2ECE4]">
-                <span className="text-xs text-[#7A6F66]">
-                  {selectedFeelings.length === 0 ? (
-                    'Select any feelings above'
-                  ) : (
-                    <span className="font-semibold text-[#2C2420]">
-                      Ready to compare with your past cycles
-                    </span>
-                  )}
-                </span>
+            <div className="pt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#F2ECE4]">
+              <span className="text-xs text-[#7A6F66]">
+                {selectedFeelings.length === 0 ? (
+                  'Select any feelings above'
+                ) : (
+                  <span className="font-semibold text-[#2C2420]">
+                    Ready to compare with your past cycles
+                  </span>
+                )}
+              </span>
 
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={selectedFeelings.length === 0}
-                  className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
-                    selectedFeelings.length > 0
-                      ? 'bg-[#8E3B22] text-white hover:bg-[#742E19] active:scale-[0.98]'
-                      : 'bg-[#E5DCD2] text-[#968B80] cursor-not-allowed'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Save & Spot Patterns
-                </button>
-              </div>
-            )}
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={selectedFeelings.length === 0}
+                className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 cursor-pointer shadow-xs ${
+                  selectedFeelings.length > 0
+                    ? 'bg-[#8E3B22] text-white hover:bg-[#742E19] active:scale-[0.98]'
+                    : 'bg-[#E5DCD2] text-[#968B80] cursor-not-allowed'
+                }`}
+              >
+                <Sparkles className="w-4 h-4" />
+                Save & Spot Patterns
+              </button>
+            </div>
           </section>
 
           {/* Interactive Cycle Timeline & Test Presets Card */}
@@ -613,6 +597,7 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
                   insight={activeInsight}
                   onExploreRhythms={onExploreRhythms}
                   onViewReceipts={onViewReceipts}
+                  onNavigateToTab={onNavigateToTab}
                 />
               </motion.div>
             ) : (

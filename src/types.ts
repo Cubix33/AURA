@@ -45,6 +45,30 @@ export interface MatchedCycleOccurrence {
   matchingFeelings: string[];
 }
 
+export type GuidanceCategory =
+  | 'nutrition'
+  | 'grounding'
+  | 'sexual_health'
+  | 'rest_recovery'
+  | 'vitality'
+  | 'headache_relief'
+  | 'bloating_relief'
+  | 'body_relief'
+  | 'general';
+
+export interface PatternGuidanceAction {
+  id: string;
+  category: GuidanceCategory;
+  categoryLabel: string;
+  title: string;
+  shortSummary: string;
+  bullets: string[];
+  recommendedFoodsOrSteps?: string[];
+  directActionLabel?: string;
+  targetTab?: 'body_mind' | 'rhythms' | 'receipts';
+  targetSubTab?: 'nutrition' | 'sexual_health' | 'mental_health' | 'red_flags';
+}
+
 export interface PatternInsight {
   id: string;
   isMatch: boolean;
@@ -65,6 +89,8 @@ export interface PatternInsight {
     summary: string;
   };
   actionableTip?: string;
+  guidance?: PatternGuidanceAction;
+  additionalGuidances?: PatternGuidanceAction[];
 }
 
 export interface BodyReceipt {

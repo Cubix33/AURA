@@ -1,5 +1,13 @@
 import { getFeelingLabel, ALL_FEELINGS_MAP } from '../data/feelingsData';
-import { BodyReceipt, BucketType, CyclePhase, DailyLog, MatchedCycleOccurrence, PatternInsight } from '../types';
+import {
+  BodyReceipt,
+  BucketType,
+  CyclePhase,
+  DailyLog,
+  MatchedCycleOccurrence,
+  PatternInsight,
+  PatternGuidanceAction,
+} from '../types';
 
 /**
  * Normalization dictionary as per AURA Pattern Detection Spec:
@@ -20,6 +28,377 @@ export const STATE_NORMALIZATION_GROUPS: Record<string, string[]> = {
   body_fluid: ['bloated', 'breast_tenderness'],
   body_aches: ['headache', 'body_aches'],
 };
+
+/**
+ * Helper to generate actionable, domain-rich guidance based on detected patterns and logged symptoms.
+ */
+export function generatePatternGuidanceList(
+  phase: CyclePhase,
+  selectedFeelingIds: string[],
+  currentCycleDay: number
+): { primary?: PatternGuidanceAction; additional: PatternGuidanceAction[] } {
+  const guidances: PatternGuidanceAction[] = [];
+
+  // Individual feeling flags
+  const hasHeadache = selectedFeelingIds.includes('headache');
+  const hasCramps = selectedFeelingIds.includes('cramps');
+  const hasBloated = selectedFeelingIds.includes('bloated');
+  const hasBreastTenderness = selectedFeelingIds.includes('breast_tenderness');
+  const hasBodyAches = selectedFeelingIds.includes('body_aches');
+  
+  const hasCravings = selectedFeelingIds.includes('craving') || selectedFeelingIds.includes('extra_hungry');
+  const hasLowAppetite = selectedFeelingIds.includes('low_appetite');
+  
+  const hasAnxiety = selectedFeelingIds.includes('anxious');
+  const hasIrritable = selectedFeelingIds.includes('irritable');
+  const hasSensitiveOrMellow = selectedFeelingIds.includes('sensitive') || selectedFeelingIds.includes('mellow');
+  const hasCalmOrHappy = selectedFeelingIds.includes('calm') || selectedFeelingIds.includes('happy');
+  
+  const hasHighLibido = selectedFeelingIds.includes('high_flirty') || selectedFeelingIds.includes('high') || selectedFeelingIds.includes('flirty');
+  const hasLowLibido = selectedFeelingIds.includes('low_libido');
+  
+  const hasLowEnergy = selectedFeelingIds.includes('drained') || selectedFeelingIds.includes('sleepy');
+  const hasHighEnergy = selectedFeelingIds.includes('energetic');
+  const hasPeriodFlow = selectedFeelingIds.some((f) => ['period_started', 'period_ongoing', 'spotting'].includes(f));
+
+  // 1. DEDICATED HEADACHE RELIEF
+  if (hasHeadache) {
+    guidances.push({
+      id: 'guidance-headache-relief',
+      category: 'headache_relief',
+      categoryLabel: 'Headache & Migraine Relief',
+      title: 'Hormonal Migraine & Tension Headache Protocol',
+      shortSummary:
+        'Rapid estrogen drops before menstruation or during ovulation cause cerebral blood vessel vasodilation and localized neuro-inflammation.',
+      bullets: [
+        'Electrolyte & Magnesium Loading: Sip 500ml water with sea salt and magnesium glycinate (300-400mg) to stabilize neurovascular spasm.',
+        'Sub-Occipital & Temple Acupressure: Press firmly into the base of the skull (GB20) and the web between thumb and index finger (LI4) for 2–3 minutes.',
+        'Cold/Heat Gradient Therapy: Place a cold compress across the forehead and temples while soaking feet in warm water to draw blood pressure downward.',
+        'Reduce Histamines & Bright Screens: Dim harsh blue light and limit aged cheeses, red wine, and cured meats during acute headache spikes.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Magnesium Glycinate (400mg)',
+        'Cold Temple Compress',
+        'LI4 / GB20 Acupressure',
+        'Trace Mineral Electrolytes',
+      ],
+      directActionLabel: 'View Headache & Health Red Flags',
+      targetTab: 'body_mind',
+      targetSubTab: 'red_flags',
+    });
+  }
+
+  // 2. DEDICATED CRAMPS & PELVIC PAIN RELIEF
+  if (hasCramps) {
+    guidances.push({
+      id: 'guidance-cramps-relief',
+      category: 'rest_recovery',
+      categoryLabel: 'Pelvic Relief & Cramp Soothing',
+      title: 'Prostaglandin & Uterine Muscle Soothing',
+      shortSummary:
+        'Endometrial shedding releases inflammatory prostaglandins (PGF2α) triggering rhythmic uterine myometrium contractions and pelvic aching.',
+      bullets: [
+        'Continuous Heat Application: 15–20 minutes of 40°C heat over the suprapubic area increases pelvic blood flow and reduces uterine pressure.',
+        'Natural Anti-Prostaglandins: Fresh ginger tea (2 cups/day) and turmeric root inhibit COX-2 inflammatory pathways as effectively as mild NSAIDs.',
+        'Pelvic Decompression Poses: Reclined Bound Angle (Supta Baddha Konasana) and Child’s Pose with a bolster to relieve sacral compression.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Suprapubic Heat Pad (40°C)',
+        'Fresh Brewed Ginger Root Tea',
+        'Child’s Pose with Bolster',
+        'Omega-3 EPA/DHA Support',
+      ],
+      directActionLabel: 'Explore Pelvic Care & Menstrual Guide',
+      targetTab: 'body_mind',
+      targetSubTab: 'nutrition',
+    });
+  }
+
+  // 3. DEDICATED BLOATING & FLUID RETENTION RELIEF
+  if (hasBloated) {
+    guidances.push({
+      id: 'guidance-bloating-relief',
+      category: 'bloating_relief',
+      categoryLabel: 'Digestive & Bloating Relief',
+      title: 'Fluid Balance & Digestive Ease Protocol',
+      shortSummary:
+        'Elevated progesterone slows gut transit time while estrogen alters aldosterone, prompting temporary water and electrolyte retention in tissues.',
+      bullets: [
+        'Potassium-Rich Diuretics: Dandelion root tea, cucumbers, celery, bananas, and coconut water naturally counter sodium-induced fluid pooling.',
+        'Gentle Digestive Mobility: Sip warm peppermint or fennel seed tea after meals; take a slow 10-minute walk to stimulate intestinal peristalsis.',
+        'Temporary Salt & Carbonation Moderation: Reduce sodium-dense processed foods, sparkling water, and artificial sweeteners that trap intestinal gas.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Dandelion & Fennel Tea',
+        'Potassium-Rich Foods (Banana, Avocado)',
+        'Post-Meal 10-Min Gentle Walk',
+        'Hydration with Fresh Lemon',
+      ],
+      directActionLabel: 'View Gut Health & Nutrition Guide',
+      targetTab: 'body_mind',
+      targetSubTab: 'nutrition',
+    });
+  }
+
+  // 4. DEDICATED BREAST TENDERNESS RELIEF
+  if (hasBreastTenderness) {
+    guidances.push({
+      id: 'guidance-breast-tenderness-relief',
+      category: 'body_relief',
+      categoryLabel: 'Breast Care & Lymphatic Relief',
+      title: 'Luteal Breast Congestion & Tenderness Care',
+      shortSummary:
+        'Luteal estrogen and progesterone stimulate breast lobular and ductal tissue proliferation, causing fluid pooling and heightened sensitivity.',
+      bullets: [
+        'Supportive Non-Wire Bras: Switch to soft, wireless bamboo or cotton bralettes to prevent chest wall lymphatic compression.',
+        'Evening Primrose Oil & Vitamin E: Gamma-linolenic acid (GLA) helps reduce cyclical mastalgia and breast tissue inflammatory sensitivity.',
+        'Gentle Lymphatic Drainage: Stroke lightly from under the breast upward toward the axillary armpit lymph nodes while showering in warm water.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Wireless Cotton Bralette',
+        'Evening Primrose Oil (GLA)',
+        'Axillary Lymphatic Massage',
+        'Reduce Excess Caffeine',
+      ],
+      directActionLabel: 'Explore Hormone Symptom Guide',
+      targetTab: 'body_mind',
+      targetSubTab: 'nutrition',
+    });
+  }
+
+  // 5. DEDICATED BODY ACHES & JOINT RELIEF
+  if (hasBodyAches && !hasHeadache && !hasCramps) {
+    guidances.push({
+      id: 'guidance-body-aches-relief',
+      category: 'body_relief',
+      categoryLabel: 'Musculoskeletal & Joint Relief',
+      title: 'Systemic Inflammation & Muscle Recovery',
+      shortSummary:
+        'Shifting steroid hormone levels temporarily elevate systemic cytokines (IL-6, TNF-alpha), causing generalized muscle soreness and fatigue.',
+      bullets: [
+        'Warm Epsom Salt Soaks: 2 cups of magnesium sulfate in a warm bath absorbs transdermally to relax tight neuromuscular junctions.',
+        'Gentle Yin Mobility: Avoid heavy eccentric loading; choose dynamic foam rolling and gentle spine mobility.',
+        'Curcumin & Tart Cherry Juice: Natural polyphenols that significantly attenuate delayed-onset soreness and muscle ache.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Epsom Salt Magnesium Bath',
+        'Tart Cherry Juice Extract',
+        'Spinal Mobility & Foam Rolling',
+        'Deep Restorative Sleep',
+      ],
+      directActionLabel: 'Explore Restorative Health Hub',
+      targetTab: 'body_mind',
+      targetSubTab: 'mental_health',
+    });
+  }
+
+  // 6. DEDICATED ANXIETY & NERVOUS SYSTEM GROUNDING
+  if (hasAnxiety || hasIrritable || hasSensitiveOrMellow) {
+    guidances.push({
+      id: 'guidance-grounding-anxiety',
+      category: 'grounding',
+      categoryLabel: 'Grounding & Nervous System Reset',
+      title: '4-7-8 Parasympathetic Vagus Nerve Reset',
+      shortSummary:
+        'Hormonal fluctuations alter GABA receptor sensitivity in the brain, making the autonomic nervous system more reactive to sensory and emotional stressors.',
+      bullets: [
+        '4-7-8 Vagus Breathing Loop: Inhale through nose for 4s, gently hold for 7s, long audible exhale through mouth for 8s. 4 rounds signals immediate safety to the amygdala.',
+        '5-4-3-2-1 Sensory Grounding: Notice 5 things you can see, 4 you can physically touch, 3 sounds you hear, 2 scents, and take 1 deep conscious breath.',
+        'Sip Warm Herbal Teas: Chamomile, spearmint, and lemon balm soothe cortisol surges; avoid excess late-afternoon caffeine.',
+      ],
+      recommendedFoodsOrSteps: [
+        '4-7-8 Breathing Loop (Below)',
+        '5-4-3-2-1 Sensory Grounding',
+        'Warm Chamomile / Lemon Balm Tea',
+        'Magnesium Glycinate (300mg)',
+      ],
+      directActionLabel: 'Launch 4-7-8 Grounding Breathwork',
+      targetTab: 'body_mind',
+      targetSubTab: 'mental_health',
+    });
+  }
+
+  // 7. DEDICATED CRAVINGS & METABOLISM GUIDANCE
+  if (hasCravings) {
+    guidances.push({
+      id: 'guidance-nutrition-cravings',
+      category: 'nutrition',
+      categoryLabel: 'Cycle Nutrition Guidance',
+      title: 'Support Your Metabolic Energy & Cravings',
+      shortSummary:
+        'Progesterone increases your resting metabolic rate by 100–300 kcal/day while serotonin dips. Cravings are physiological cues for steady fuel, not a lack of willpower.',
+      bullets: [
+        'Slow-Burn Complex Carbohydrates: Sweet potatoes, oats, quinoa, and brown rice sustain brain serotonin and prevent blood-sugar drops.',
+        'Magnesium & Healthy Fats: 70%+ dark chocolate, pumpkin seeds, and avocado ease muscle tension and stabilize mood.',
+        'Luteal Seed Cycling: 1 tbsp sunflower seeds + 1 tbsp sesame seeds daily to naturally support progesterone synthesis.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Dark Chocolate (70%+)',
+        'Pumpkin & Sunflower Seeds',
+        'Roasted Sweet Potatoes',
+        'Warm Lentil / Bone Broth',
+      ],
+      directActionLabel: 'View Phase Nutrition & Meal Ideas',
+      targetTab: 'body_mind',
+      targetSubTab: 'nutrition',
+    });
+  }
+
+  // 8. DEDICATED HIGH LIBIDO & INTIMACY SOVEREIGNTY
+  if (hasHighLibido) {
+    guidances.push({
+      id: 'guidance-sexual-health-vitality',
+      category: 'sexual_health',
+      categoryLabel: 'Sexual Health & Intimacy Sovereignty',
+      title: 'Peak Ovulatory Vitality & Fertile Window Navigation',
+      shortSummary:
+        'Estrogen peaks alongside luteinizing hormone (LH) and subtle testosterone, naturally increasing natural lubrication, tactile sensitivity, and sexual drive.',
+      bullets: [
+        'Fertility Window Awareness: Clear, stretchy "egg-white" cervical fluid indicates peak fertility. Sperm can survive up to 5 days in fertile cervical crypts.',
+        'Empowered Protection: If avoiding pregnancy, use dual-barrier methods (condoms) or reliable contraception throughout this high-probability window.',
+        'FRIES Enthusiastic Consent: Practice clear boundaries that are Freely given, Reversible, Informed, Enthusiastic, and Specific.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Fertile Window Check',
+        'Barrier Protection',
+        'FRIES Consent Checklist',
+        'Zinc & Hydration Boost',
+      ],
+      directActionLabel: 'Explore Sexual Health & Contraception Guide',
+      targetTab: 'body_mind',
+      targetSubTab: 'sexual_health',
+    });
+  }
+
+  // 9. DEDICATED LOW LIBIDO / RESTORATIVE CARE
+  if (hasLowLibido && !hasHighLibido) {
+    guidances.push({
+      id: 'guidance-low-libido-care',
+      category: 'sexual_health',
+      categoryLabel: 'Intimacy & Hormone Harmony',
+      title: 'Low Desire & Nervous System Nourishment',
+      shortSummary:
+        'Lower estradiol or high cortisol suppresses spontaneous desire. Hormonal shifts make non-demanding touch and emotional security essential.',
+      bullets: [
+        'Sensate Focus & Pressure-Free Intimacy: Prioritize emotional attunement, warm hugs, skin-to-skin touch without performance expectations.',
+        'Adrenal Recovery: High stress diverts pregnenolone away from sex hormone production toward cortisol (pregnenolone steal).',
+        'Nourishing Adaptogens: Ashwagandha or Maca root to gently support adrenal stamina and vitality.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Pressure-Free Connection',
+        'Ashwagandha / Maca Root',
+        'Warm Herbal Baths',
+        'Open Partner Communication',
+      ],
+      directActionLabel: 'Explore Intimacy & Sexual Health Hub',
+      targetTab: 'body_mind',
+      targetSubTab: 'sexual_health',
+    });
+  }
+
+  // 10. DEDICATED FATIGUE / DRAINED / SLEEPY RECOVERY
+  if (hasLowEnergy) {
+    guidances.push({
+      id: 'guidance-fatigue-recovery',
+      category: 'rest_recovery',
+      categoryLabel: 'Energy & Circadian Recovery',
+      title: 'Cellular Recovery & Energy Restoration',
+      shortSummary:
+        'Low estrogen/progesterone nadir or elevated progesterone promotes GABA activation and higher body temperature, impacting restorative deep sleep.',
+      bullets: [
+        'Circadian Light Exposure: Get 10–15 minutes of natural sunlight within 1 hour of waking to calibrate melatonin onset tonight.',
+        'Targeted Iron & B-Complex: If bleeding, replenish iron (spinach, lentils, vitamin C pairing) and active B12/B6 for mitochondrial ATP.',
+        'Protect Non-Negotiable Rest: Honor your body’s biological request for lower output without guilt.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Morning Natural Sunlight (15 min)',
+        'Iron + Vitamin C Food Pairings',
+        'Hydration with Sea Salt',
+        'Non-Negotiable 8h Sleep',
+      ],
+      directActionLabel: 'View Energy & Sleep Rhythms',
+      targetTab: 'rhythms',
+    });
+  }
+
+  // 11. HIGH ENERGY / COGNITIVE FLOW
+  if (hasHighEnergy || (phase === 'follicular' && guidances.length === 0)) {
+    guidances.push({
+      id: 'guidance-follicular-vitality',
+      category: 'vitality',
+      categoryLabel: 'Cognitive Flow & Vitality',
+      title: 'Estrogen Peak & Cognitive Expansion',
+      shortSummary:
+        'Rising estradiol enhances insulin sensitivity, dopamine receptor density, and cognitive stamina, creating an optimal window for peak execution.',
+      bullets: [
+        'Strategic Deep Work: Ideal phase for pitching, starting complex creative initiatives, and challenging cognitive tasks.',
+        'Progressive Strength Training: Enhanced muscle protein synthesis allows higher training volume and faster neuromuscular recovery.',
+        'Gut & Liver Support: Cruciferous greens (broccoli, kale, arugula) assist hepatic phase II estrogen methylation.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Ground Flaxseeds & Pumpkin Seeds',
+        'High-Intensity / Strength Training',
+        'Cruciferous Vegetables (Arugula, Broccoli)',
+        'Creative Project Kickoffs',
+      ],
+      directActionLabel: 'Explore Follicular Nutrition & Lifestyle',
+      targetTab: 'body_mind',
+      targetSubTab: 'nutrition',
+    });
+  }
+
+  // 12. CALM & HAPPY HARMONY
+  if (hasCalmOrHappy && guidances.length === 0) {
+    guidances.push({
+      id: 'guidance-harmony-mind',
+      category: 'vitality',
+      categoryLabel: 'Emotional Flow & Well-being',
+      title: 'Hormonal Balance & Emotional Grounding',
+      shortSummary:
+        'Your nervous system is resting in a parasympathetic vagal baseline with balanced neurotransmitter synthesis.',
+      bullets: [
+        'Anchor Positive Habits: Great time to establish consistent meditation, gratitude journaling, or sleep hygiene practices.',
+        'Nourish Steady Baseline: Maintain clean whole foods and mindful hydration to extend this stable state.',
+        'Check in daily with AURA to document what creates this positive physiological state.',
+      ],
+      recommendedFoodsOrSteps: [
+        'Gratitude Journaling',
+        'Balanced Mediterranean Meals',
+        'Outdoor Walk in Nature',
+        'Mindful Evening Wind-Down',
+      ],
+      directActionLabel: 'Explore Body & Mind Health Hub',
+      targetTab: 'body_mind',
+      targetSubTab: 'mental_health',
+    });
+  }
+
+  // 13. Fallback general guidance if no feelings selected
+  if (guidances.length === 0) {
+    guidances.push({
+      id: 'guidance-general-rhythm',
+      category: 'general',
+      categoryLabel: 'Daily Biological Rhythm Tip',
+      title: `${getPhaseDisplayName(phase)} Optimization`,
+      shortSummary:
+        'Your body moves in biological phases that influence resting metabolism, sleep depth, and emotional bandwidth.',
+      bullets: [
+        'Hydrate with trace mineral electrolytes to support cellular fluid balance.',
+        'Align physical movement intensity with your current hormone baseline.',
+        'Check in daily with AURA to build your personalized pattern receipts.',
+      ],
+      recommendedFoodsOrSteps: ['Hydration with Electrolytes', 'Balanced Whole Foods', 'Consistent Sleep Pacing'],
+      directActionLabel: 'Explore Body & Mind Health Hub',
+      targetTab: 'body_mind',
+      targetSubTab: 'nutrition',
+    });
+  }
+
+  return {
+    primary: guidances[0],
+    additional: guidances.slice(1),
+  };
+}
 
 /**
  * Returns all normalized group keys that a given feeling ID belongs to,
@@ -333,6 +712,12 @@ export function detectPatterns(
     actionableTip = 'Ideal window for starting new routines, learning complex skills, and increasing training intensity.';
   }
 
+  const { primary: primaryGuidance, additional: additionalGuidances } = generatePatternGuidanceList(
+    phase,
+    selectedFeelingIds,
+    currentCycleDay
+  );
+
   return {
     id: `insight-${currentCycleDay}-${selectedFeelingIds.join('-')}`,
     isMatch: matchedCyclesCount >= 1,
@@ -349,6 +734,8 @@ export function detectPatterns(
     occurrences: matchingOccurrences,
     hormoneContext,
     actionableTip,
+    guidance: primaryGuidance,
+    additionalGuidances,
   };
 }
 
