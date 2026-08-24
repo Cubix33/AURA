@@ -1,7 +1,79 @@
 import { DailyLog, UserCycleProfile } from '../types';
 
+/**
+ * 3-Cycle Benchmark Demo Dataset (36 entries across 3 cycles)
+ * As defined in the MVP Pattern Detection Specification:
+ * - Cycle 1 (28 days)
+ * - Cycle 2 (28 days)
+ * - Cycle 3 (28 days)
+ * - Current cycle (Cycle 0, in progress)
+ */
+
+export interface DemoDataset {
+  user_id: string;
+  profile: {
+    average_cycle_length: number;
+    cycles_in_history: number;
+    logging_frequency: string;
+    note: string;
+  };
+  historical_cycles: Array<{
+    cycle: number;
+    day: number;
+    mood: string;
+    appetite: string;
+    libido: string;
+    energy: string;
+    body: string[];
+    period: string;
+  }>;
+}
+
+export const DEMO_BENCHMARK_RAW = [
+  // CYCLE 1
+  { cycle: 1, day: 2, mood: 'mellow', appetite: 'normal_appetite', libido: 'low_libido', energy: 'drained', body: ['cramps'], period: 'period_ongoing' },
+  { cycle: 1, day: 5, mood: 'calm', appetite: 'normal_appetite', libido: 'low_libido', energy: 'normal_energy', body: ['bloated'], period: 'period_ended' },
+  { cycle: 1, day: 7, mood: 'happy', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'energetic', body: [], period: 'period_ended' },
+  { cycle: 1, day: 10, mood: 'calm', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 1, day: 13, mood: 'happy', appetite: 'normal_appetite', libido: 'high_flirty', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 1, day: 15, mood: 'happy', appetite: 'normal_appetite', libido: 'high_flirty', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 1, day: 18, mood: 'calm', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'normal_energy', body: [], period: 'none' },
+  { cycle: 1, day: 20, mood: 'irritable', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'normal_energy', body: ['headache'], period: 'none' },
+  { cycle: 1, day: 22, mood: 'mellow', appetite: 'extra_hungry', libido: 'normal_libido', energy: 'drained', body: ['bloated'], period: 'none' },
+  { cycle: 1, day: 24, mood: 'sensitive', appetite: 'craving', libido: 'normal_libido', energy: 'sleepy', body: ['bloated'], period: 'none' },
+  { cycle: 1, day: 26, mood: 'mellow', appetite: 'extra_hungry', libido: 'low_libido', energy: 'drained', body: ['breast_tenderness'], period: 'none' },
+  { cycle: 1, day: 28, mood: 'irritable', appetite: 'craving', libido: 'low_libido', energy: 'sleepy', body: ['cramps'], period: 'none' },
+
+  // CYCLE 2
+  { cycle: 2, day: 1, mood: 'sensitive', appetite: 'normal_appetite', libido: 'low_libido', energy: 'drained', body: ['cramps'], period: 'period_started' },
+  { cycle: 2, day: 4, mood: 'calm', appetite: 'normal_appetite', libido: 'low_libido', energy: 'normal_energy', body: ['bloated'], period: 'period_ongoing' },
+  { cycle: 2, day: 7, mood: 'happy', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'energetic', body: [], period: 'period_ended' },
+  { cycle: 2, day: 9, mood: 'calm', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 2, day: 12, mood: 'happy', appetite: 'normal_appetite', libido: 'high_flirty', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 2, day: 14, mood: 'happy', appetite: 'normal_appetite', libido: 'high_flirty', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 2, day: 17, mood: 'calm', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'normal_energy', body: [], period: 'none' },
+  { cycle: 2, day: 19, mood: 'anxious', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'normal_energy', body: ['headache'], period: 'none' },
+  { cycle: 2, day: 23, mood: 'mellow', appetite: 'extra_hungry', libido: 'normal_libido', energy: 'drained', body: ['bloated'], period: 'none' },
+  { cycle: 2, day: 24, mood: 'sensitive', appetite: 'craving', libido: 'normal_libido', energy: 'sleepy', body: ['bloated'], period: 'none' },
+  { cycle: 2, day: 26, mood: 'mellow', appetite: 'extra_hungry', libido: 'low_libido', energy: 'drained', body: ['breast_tenderness'], period: 'none' },
+  { cycle: 2, day: 28, mood: 'irritable', appetite: 'craving', libido: 'low_libido', energy: 'sleepy', body: ['cramps'], period: 'none' },
+
+  // CYCLE 3
+  { cycle: 3, day: 2, mood: 'mellow', appetite: 'normal_appetite', libido: 'low_libido', energy: 'drained', body: ['cramps'], period: 'period_ongoing' },
+  { cycle: 3, day: 5, mood: 'calm', appetite: 'normal_appetite', libido: 'low_libido', energy: 'normal_energy', body: ['bloated'], period: 'period_ended' },
+  { cycle: 3, day: 8, mood: 'happy', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'energetic', body: [], period: 'period_ended' },
+  { cycle: 3, day: 10, mood: 'calm', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 3, day: 13, mood: 'happy', appetite: 'normal_appetite', libido: 'high_flirty', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 3, day: 15, mood: 'happy', appetite: 'normal_appetite', libido: 'high_flirty', energy: 'energetic', body: [], period: 'none' },
+  { cycle: 3, day: 18, mood: 'calm', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'normal_energy', body: [], period: 'none' },
+  { cycle: 3, day: 21, mood: 'irritable', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'normal_energy', body: ['headache'], period: 'none' },
+  { cycle: 3, day: 23, mood: 'mellow', appetite: 'extra_hungry', libido: 'normal_libido', energy: 'drained', body: ['bloated'], period: 'none' },
+  { cycle: 3, day: 25, mood: 'sensitive', appetite: 'craving', libido: 'normal_libido', energy: 'sleepy', body: ['bloated'], period: 'none' },
+  { cycle: 3, day: 26, mood: 'mellow', appetite: 'extra_hungry', libido: 'low_libido', energy: 'drained', body: ['breast_tenderness'], period: 'none' },
+  { cycle: 3, day: 28, mood: 'irritable', appetite: 'craving', libido: 'low_libido', energy: 'sleepy', body: ['cramps'], period: 'none' }
+];
+
 export function getInitialCycleProfile(): UserCycleProfile {
-  // Let's compute a lastPeriodDate roughly 18 days before today
   const today = new Date();
   const lastPeriod = new Date(today);
   lastPeriod.setDate(today.getDate() - 17); // Day 18 of current cycle
@@ -21,128 +93,74 @@ export function generateSampleHistoricalLogs(lastPeriodDateStr: string, cycleLen
 
   const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
-  // Helper to add days
   const addDays = (base: Date, days: number) => {
     const res = new Date(base);
     res.setDate(res.getDate() + days);
     return res;
   };
 
-  // Cycle -3 (3 cycles ago)
-  const cycle3Start = addDays(currentPeriodStart, -cycleLength * 3);
-  const cycle3Entries: Array<{ day: number; feelings: string[]; notes?: string }> = [
-    { day: 1, feelings: ['period_started', 'cramps', 'drained'], notes: 'Period started morning, heating pad needed' },
-    { day: 2, feelings: ['period_ongoing', 'cramps', 'drained', 'headache'] },
-    { day: 3, feelings: ['period_ongoing', 'sleepy', 'drained'] },
-    { day: 5, feelings: ['period_ended', 'calm', 'normal_energy'] },
-    { day: 8, feelings: ['energetic', 'calm', 'normal_appetite'] },
-    { day: 10, feelings: ['happy', 'energetic', 'normal_libido'] },
-    { day: 14, feelings: ['high_flirty', 'energetic', 'happy'], notes: 'Peak energy at work' },
-    { day: 15, feelings: ['high_flirty', 'calm'] },
-    { day: 19, feelings: ['calm', 'normal_energy', 'normal_appetite'] },
-    { day: 22, feelings: ['extra_hungry', 'craving', 'bloated'] },
-    { day: 24, feelings: ['extra_hungry', 'irritable', 'bloated', 'craving'], notes: 'Ate twice as much dinner, chocolate craving' },
-    { day: 26, feelings: ['extra_hungry', 'sensitive', 'bloated', 'sleepy'] },
-    { day: 27, feelings: ['irritable', 'spotting', 'breast_tenderness'] },
-  ];
+  // Build Cycle -3 (cycle: 1 in raw data), Cycle -2 (cycle: 2), Cycle -1 (cycle: 3)
+  const cycleIndexMap: Record<number, number> = {
+    1: -3,
+    2: -2,
+    3: -1,
+  };
 
-  cycle3Entries.forEach((entry) => {
-    const entryDate = addDays(cycle3Start, entry.day - 1);
+  DEMO_BENCHMARK_RAW.forEach((item, index) => {
+    const pastCycleNum = cycleIndexMap[item.cycle];
+    const cycleOffset = Math.abs(pastCycleNum); // 3, 2, or 1
+    const cycleStartDate = addDays(currentPeriodStart, -cycleLength * cycleOffset);
+    const entryDate = addDays(cycleStartDate, item.day - 1);
+
+    const feelingsList: string[] = [];
+    if (item.mood && item.mood !== 'none') feelingsList.push(item.mood);
+    if (item.appetite && item.appetite !== 'none') feelingsList.push(item.appetite);
+    if (item.libido && item.libido !== 'none') feelingsList.push(item.libido);
+    if (item.energy && item.energy !== 'none') feelingsList.push(item.energy);
+    if (Array.isArray(item.body)) {
+      feelingsList.push(...item.body);
+    }
+    if (item.period && item.period !== 'none') feelingsList.push(item.period);
+
     logs.push({
-      id: `log-c3-d${entry.day}`,
+      id: `demo-c${item.cycle}-d${item.day}-${index}`,
       date: formatDate(entryDate),
-      cycleDay: entry.day,
-      cycleNumber: -3,
-      feelings: entry.feelings,
-      notes: entry.notes,
+      cycleDay: item.day,
+      cycleNumber: pastCycleNum,
+      feelings: feelingsList,
+      notes: undefined,
       createdAt: entryDate.getTime(),
     });
   });
 
-  // Cycle -2 (2 cycles ago, 29 days)
-  const cycle2Start = addDays(currentPeriodStart, -cycleLength * 2 - 1);
-  const cycle2Entries: Array<{ day: number; feelings: string[]; notes?: string }> = [
-    { day: 1, feelings: ['period_started', 'cramps', 'drained', 'headache'] },
-    { day: 2, feelings: ['period_ongoing', 'cramps', 'drained'] },
-    { day: 3, feelings: ['period_ongoing', 'bloated', 'sleepy'] },
-    { day: 4, feelings: ['period_ongoing', 'calm'] },
-    { day: 6, feelings: ['period_ended', 'normal_energy'] },
-    { day: 9, feelings: ['energetic', 'calm', 'normal_appetite'] },
-    { day: 11, feelings: ['happy', 'energetic'] },
-    { day: 14, feelings: ['high_flirty', 'energetic', 'happy'], notes: 'Felt very social' },
-    { day: 15, feelings: ['high_flirty', 'energetic'] },
-    { day: 18, feelings: ['calm', 'normal_energy'] },
-    { day: 23, feelings: ['extra_hungry', 'craving', 'bloated'] },
-    { day: 24, feelings: ['extra_hungry', 'irritable', 'bloated', 'craving'] },
-    { day: 25, feelings: ['extra_hungry', 'sensitive', 'bloated', 'body_aches'] },
-    { day: 27, feelings: ['irritable', 'drained', 'breast_tenderness'] },
+  // Current Cycle (Cycle 0, up to Day 17)
+  const currentEntries = [
+    { day: 2, mood: 'mellow', appetite: 'normal_appetite', libido: 'low_libido', energy: 'drained', body: ['cramps'], period: 'period_ongoing' },
+    { day: 5, mood: 'calm', appetite: 'normal_appetite', libido: 'low_libido', energy: 'normal_energy', body: ['bloated'], period: 'period_ended' },
+    { day: 8, mood: 'happy', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'energetic', body: [], period: 'period_ended' },
+    { day: 10, mood: 'calm', appetite: 'normal_appetite', libido: 'normal_libido', energy: 'energetic', body: [], period: 'none' },
+    { day: 13, mood: 'happy', appetite: 'normal_appetite', libido: 'high_flirty', energy: 'energetic', body: [], period: 'none' },
+    { day: 15, mood: 'happy', appetite: 'normal_appetite', libido: 'high_flirty', energy: 'energetic', body: [], period: 'none' },
   ];
 
-  cycle2Entries.forEach((entry) => {
-    const entryDate = addDays(cycle2Start, entry.day - 1);
+  currentEntries.forEach((item, index) => {
+    const entryDate = addDays(currentPeriodStart, item.day - 1);
+    const feelingsList: string[] = [];
+    if (item.mood && item.mood !== 'none') feelingsList.push(item.mood);
+    if (item.appetite && item.appetite !== 'none') feelingsList.push(item.appetite);
+    if (item.libido && item.libido !== 'none') feelingsList.push(item.libido);
+    if (item.energy && item.energy !== 'none') feelingsList.push(item.energy);
+    if (Array.isArray(item.body)) {
+      feelingsList.push(...item.body);
+    }
+    if (item.period && item.period !== 'none') feelingsList.push(item.period);
+
     logs.push({
-      id: `log-c2-d${entry.day}`,
+      id: `current-c0-d${item.day}-${index}`,
       date: formatDate(entryDate),
-      cycleDay: entry.day,
-      cycleNumber: -2,
-      feelings: entry.feelings,
-      notes: entry.notes,
-      createdAt: entryDate.getTime(),
-    });
-  });
-
-  // Cycle -1 (Last cycle, 28 days)
-  const cycle1Start = addDays(currentPeriodStart, -cycleLength);
-  const cycle1Entries: Array<{ day: number; feelings: string[]; notes?: string }> = [
-    { day: 1, feelings: ['period_started', 'cramps', 'drained'] },
-    { day: 2, feelings: ['period_ongoing', 'cramps', 'drained', 'breast_tenderness'] },
-    { day: 3, feelings: ['period_ongoing', 'sleepy'] },
-    { day: 5, feelings: ['period_ended', 'calm', 'normal_energy'] },
-    { day: 8, feelings: ['energetic', 'happy', 'normal_appetite'] },
-    { day: 10, feelings: ['energetic', 'calm'] },
-    { day: 13, feelings: ['high_flirty', 'energetic', 'happy'] },
-    { day: 14, feelings: ['high_flirty', 'energetic', 'calm'] },
-    { day: 15, feelings: ['high_flirty', 'happy'] },
-    { day: 20, feelings: ['calm', 'normal_energy', 'normal_appetite'] },
-    { day: 23, feelings: ['extra_hungry', 'craving', 'bloated'] },
-    { day: 24, feelings: ['extra_hungry', 'irritable', 'bloated', 'craving'], notes: 'Unusually hungry all afternoon' },
-    { day: 25, feelings: ['extra_hungry', 'sleepy', 'sensitive', 'bloated'] },
-    { day: 26, feelings: ['irritable', 'bloated', 'breast_tenderness'] },
-  ];
-
-  cycle1Entries.forEach((entry) => {
-    const entryDate = addDays(cycle1Start, entry.day - 1);
-    logs.push({
-      id: `log-c1-d${entry.day}`,
-      date: formatDate(entryDate),
-      cycleDay: entry.day,
-      cycleNumber: -1,
-      feelings: entry.feelings,
-      notes: entry.notes,
-      createdAt: entryDate.getTime(),
-    });
-  });
-
-  // Current Cycle (Cycle 0, up to day 17)
-  const currentEntries: Array<{ day: number; feelings: string[]; notes?: string }> = [
-    { day: 1, feelings: ['period_started', 'cramps', 'drained'] },
-    { day: 2, feelings: ['period_ongoing', 'cramps', 'drained'] },
-    { day: 3, feelings: ['period_ongoing', 'sleepy'] },
-    { day: 5, feelings: ['period_ended', 'calm'] },
-    { day: 9, feelings: ['energetic', 'happy'] },
-    { day: 13, feelings: ['high_flirty', 'energetic', 'happy'] },
-    { day: 14, feelings: ['high_flirty', 'energetic'] },
-  ];
-
-  currentEntries.forEach((entry) => {
-    const entryDate = addDays(currentPeriodStart, entry.day - 1);
-    logs.push({
-      id: `log-c0-d${entry.day}`,
-      date: formatDate(entryDate),
-      cycleDay: entry.day,
+      cycleDay: item.day,
       cycleNumber: 0,
-      feelings: entry.feelings,
-      notes: entry.notes,
+      feelings: feelingsList,
       createdAt: entryDate.getTime(),
     });
   });

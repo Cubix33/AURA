@@ -1,6 +1,40 @@
 import { getFeelingLabel, ALL_FEELINGS_MAP } from '../data/feelingsData';
 import { BodyReceipt, BucketType, CyclePhase, DailyLog, MatchedCycleOccurrence, PatternInsight } from '../types';
 
+/**
+ * Normalization dictionary as per AURA Pattern Detection Spec:
+ * Groups semantically related raw feeling IDs into analytic cluster keys.
+ */
+export const STATE_NORMALIZATION_GROUPS: Record<string, string[]> = {
+  mood_sensitive: ['mellow', 'sensitive', 'emotional'],
+  mood_irritable: ['irritable', 'anxious'],
+  mood_vital: ['happy', 'calm'],
+  appetite_high: ['extra_hungry', 'craving'],
+  appetite_normal: ['normal_appetite'],
+  appetite_low: ['low_appetite'],
+  energy_low: ['drained', 'sleepy'],
+  energy_high: ['energetic'],
+  libido_high: ['high_flirty', 'high', 'flirty'],
+  libido_low: ['low_libido', 'low'],
+  body_pelvic: ['cramps'],
+  body_fluid: ['bloated', 'breast_tenderness'],
+  body_aches: ['headache', 'body_aches'],
+};
+
+/**
+ * Returns all normalized group keys that a given feeling ID belongs to,
+ * plus the item's own ID as a direct state.
+ */
+export function getNormalizedGroupsForFeeling(feelingId: string): string[] {
+  const groups: string[] = [feelingId];
+  for (const [groupKey, members] of Object.entries(STATE_NORMALIZATION_GROUPS)) {
+    if (members.includes(feelingId)) {
+      groups.push(groupKey);
+    }
+  }
+  return groups;
+}
+
 export function getCyclePhase(cycleDay: number, cycleLength: number = 28, periodLength: number = 5): CyclePhase {
   if (cycleDay <= periodLength) {
     return 'menstrual';
@@ -45,14 +79,12 @@ export function calculateCycleDay(targetDateStr: string, lastPeriodDateStr: stri
   const target = new Date(targetDateStr);
   const start = new Date(lastPeriodDateStr);
   
-  // Set both to midnight UTC to avoid timezone drift
   const targetUtc = Date.UTC(target.getFullYear(), target.getMonth(), target.getDate());
   const startUtc = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
   
   const diffDays = Math.floor((targetUtc - startUtc) / (1000 * 60 * 60 * 24));
   
   if (diffDays < 0) {
-    // Before last period: wrap around
     const mod = (diffDays % cycleLength + cycleLength) % cycleLength;
     return mod === 0 ? cycleLength : mod;
   }
@@ -61,6 +93,27 @@ export function calculateCycleDay(targetDateStr: string, lastPeriodDateStr: stri
   return cycleDay;
 }
 
+export type ConfidenceStatus = 'learning' | 'emerging' | 'recurring' | 'strong_recurring';
+
+export interface DetectionResult {
+  status: ConfidenceStatus;
+  headline: string;
+  subheadline: string;
+  matchedCyclesCount: number;
+  comparableCyclesCount: number;
+  occurrences: MatchedCycleOccurrence[];
+  matchedFeelingLabels: string[];
+}
+
+/**
+ * Multi-Cycle Pattern Detection Engine
+ * Adheres to the AURA scientific framework & MVP pattern-detection rules:
+ * 1. Normalized state grouping (e.g. extra_hungry + craving -> appetite_high)
+ * 2. Dynamic ±2 day comparison window
+ * 3. Comparability requirement: cycle is comparable ONLY if user checked in within the window
+ * 4. Distinct cycle counting (multiple logs in one cycle count as 1 match)
+ * 5. Respectful, non-diagnostic, scientifically grounded language guardrails
+ */
 export function detectPatterns(
   currentCycleDay: number,
   selectedFeelingIds: string[],
@@ -71,24 +124,27 @@ export function detectPatterns(
   const phase = getCyclePhase(currentCycleDay, cycleLength, periodLength);
   const phaseName = getPhaseDisplayName(phase);
   
-  const windowRadius = 2; // ±2 days
+  const windowRadius = 2; // ±2 days MVP heuristic
   const minDay = Math.max(1, currentCycleDay - windowRadius);
   const maxDay = Math.min(cycleLength, currentCycleDay + windowRadius);
   
-  // Filter historical logs from past cycles (-1, -2, -3, etc.)
+  // Historical logs from completed past cycles (-1, -2, -3...)
   const pastCyclesLogs = allLogs.filter((log) => log.cycleNumber < 0);
+  const distinctPastCycleNumbers = Array.from(new Set(pastCyclesLogs.map((l) => l.cycleNumber))).sort((a, b) => b - a);
+  const totalPastCyclesAnalyzed = Math.max(distinctPastCycleNumbers.length, 3);
   
-  // Group logs by cycleNumber
-  const distinctPastCycles = Array.from(new Set(pastCyclesLogs.map((l) => l.cycleNumber))).sort((a, b) => b - a);
-  const totalPastCyclesAnalyzed = Math.max(distinctPastCycles.length, 3);
-  
+  const selectedLabels = selectedFeelingIds.map((id) => getFeelingLabel(id));
+  const selectedBuckets = Array.from(
+    new Set(selectedFeelingIds.map((id) => ALL_FEELINGS_MAP[id]?.bucket).filter(Boolean))
+  ) as BucketType[];
+
   if (selectedFeelingIds.length === 0) {
     return {
       id: 'insight-empty',
       isMatch: false,
       headline: 'AURA is listening',
       subheadline: `Cycle Day ${currentCycleDay} · ${phaseName}`,
-      explanation: 'Select one or more feelings above to see if your body has followed this rhythm in past cycles.',
+      explanation: 'Tap how you feel above, then hit Save to let AURA spot recurring patterns across your past cycles.',
       symptomLabels: [],
       buckets: [],
       cyclePhase: phase,
@@ -100,47 +156,136 @@ export function detectPatterns(
     };
   }
 
-  // Check matching occurrences across past cycles
-  const cycleMatches: Record<number, { log: DailyLog; matchingFeelings: string[] }> = {};
-  
-  pastCyclesLogs.forEach((log) => {
-    // Check if log is within the cycle day window
-    if (log.cycleDay >= minDay && log.cycleDay <= maxDay) {
-      const common = log.feelings.filter((f) => selectedFeelingIds.includes(f));
-      if (common.length > 0) {
-        if (!cycleMatches[log.cycleNumber] || common.length > cycleMatches[log.cycleNumber].matchingFeelings.length) {
-          cycleMatches[log.cycleNumber] = {
-            log,
-            matchingFeelings: common,
-          };
+  // Find normalized groups for current selected feelings
+  const currentNormalizedTokens = new Set<string>();
+  selectedFeelingIds.forEach((id) => {
+    getNormalizedGroupsForFeeling(id).forEach((token) => currentNormalizedTokens.add(token));
+  });
+
+  // Group historical logs by cycle number
+  const logsByCycle: Record<number, DailyLog[]> = {};
+  distinctPastCycleNumbers.forEach((cNum) => {
+    logsByCycle[cNum] = pastCyclesLogs.filter((l) => l.cycleNumber === cNum);
+  });
+
+  // Check comparability & matching for each past cycle
+  const comparableCycleNumbers: number[] = [];
+  const matchingOccurrences: MatchedCycleOccurrence[] = [];
+
+  distinctPastCycleNumbers.forEach((cNum) => {
+    const cycleLogs = logsByCycle[cNum] || [];
+    // Logs within the ±2 day window
+    const windowLogs = cycleLogs.filter((l) => l.cycleDay >= minDay && l.cycleDay <= maxDay);
+
+    if (windowLogs.length > 0) {
+      comparableCycleNumbers.push(cNum);
+
+      // Check for direct or normalized match
+      let bestLog: DailyLog | null = null;
+      let matchedFeelingsInLog: string[] = [];
+
+      windowLogs.forEach((wLog) => {
+        const directMatches = wLog.feelings.filter((f) => selectedFeelingIds.includes(f));
+        const normalizedMatches = wLog.feelings.filter((f) => {
+          const fTokens = getNormalizedGroupsForFeeling(f);
+          return fTokens.some((t) => currentNormalizedTokens.has(t));
+        });
+
+        const combinedMatched = Array.from(new Set([...directMatches, ...normalizedMatches]));
+
+        if (combinedMatched.length > matchedFeelingsInLog.length) {
+          matchedFeelingsInLog = combinedMatched;
+          bestLog = wLog;
         }
+      });
+
+      if (bestLog && matchedFeelingsInLog.length > 0) {
+        let cycleLabel = `Cycle ${cNum}`;
+        if (cNum === -1) cycleLabel = 'Last cycle';
+        else if (cNum === -2) cycleLabel = '2 cycles ago';
+        else if (cNum === -3) cycleLabel = '3 cycles ago';
+
+        matchingOccurrences.push({
+          cycleNumber: cNum,
+          cycleLabel,
+          cycleDay: (bestLog as DailyLog).cycleDay,
+          date: (bestLog as DailyLog).date,
+          matchingFeelings: matchedFeelingsInLog,
+        });
       }
     }
   });
 
-  const matchedCycleNumbers = Object.keys(cycleMatches).map(Number);
-  const matchedCyclesCount = matchedCycleNumbers.length;
+  const matchedCyclesCount = matchingOccurrences.length;
+  const comparableCount = comparableCycleNumbers.length;
 
-  const occurrences: MatchedCycleOccurrence[] = matchedCycleNumbers.map((cNum) => {
-    const match = cycleMatches[cNum];
-    let cycleLabel = `Cycle ${cNum}`;
-    if (cNum === -1) cycleLabel = 'Last cycle';
-    else if (cNum === -2) cycleLabel = '2 cycles ago';
-    else if (cNum === -3) cycleLabel = '3 cycles ago';
+  // Determine Confidence Status as per pattern_rules.json
+  let status: ConfidenceStatus = 'learning';
+  if (comparableCount < 2) {
+    status = 'learning';
+  } else if (matchedCyclesCount >= 3) {
+    status = 'strong_recurring';
+  } else if (matchedCyclesCount === 2 && comparableCount <= 3) {
+    status = 'recurring';
+  } else if (matchedCyclesCount >= 1) {
+    status = 'emerging';
+  }
 
-    return {
-      cycleNumber: cNum,
-      cycleLabel,
-      cycleDay: match.log.cycleDay,
-      date: match.log.date,
-      matchingFeelings: match.matchingFeelings,
-    };
-  });
+  // Format headline tailored to user feelings and match strength
+  let headline = '';
+  let subheadline = '';
 
-  const selectedLabels = selectedFeelingIds.map((id) => getFeelingLabel(id));
-  const selectedBuckets = Array.from(new Set(selectedFeelingIds.map((id) => ALL_FEELINGS_MAP[id]?.bucket).filter(Boolean))) as BucketType[];
+  const hasHighAppetite = selectedFeelingIds.some((f) => ['extra_hungry', 'craving'].includes(f));
+  const hasLowEnergy = selectedFeelingIds.some((f) => ['drained', 'sleepy'].includes(f));
+  const hasHighLibido = selectedFeelingIds.some((f) => ['high_flirty', 'high', 'flirty'].includes(f));
+  const hasHighEnergy = selectedFeelingIds.some((f) => ['energetic'].includes(f));
+  const hasCramps = selectedFeelingIds.some((f) => ['cramps'].includes(f));
 
-  // Biological & Hormonal Explanations based on feelings + phase
+  // Natural language generation
+  if (hasHighAppetite && hasLowEnergy && currentCycleDay >= 21 && currentCycleDay <= 27) {
+    if (matchedCyclesCount >= 3) {
+      headline = `In your last 3 cycles, you tended to feel hungrier around days ${minDay}–${maxDay}.`;
+      subheadline = `Recurring pattern verified across ${matchedCyclesCount} of ${matchedCyclesCount} recent cycles`;
+    } else if (matchedCyclesCount === 2) {
+      headline = `You’ve often logged increased appetite and lower energy around this time in recent cycles.`;
+      subheadline = `Appeared in 2 of your past cycles around Cycle Day ${currentCycleDay}`;
+    } else {
+      headline = `This has happened around a similar time before.`;
+      subheadline = `AURA is monitoring this late luteal rhythm`;
+    }
+  } else if (hasHighLibido && hasHighEnergy && currentCycleDay >= 12 && currentCycleDay <= 16) {
+    if (matchedCyclesCount >= 2) {
+      headline = `You tend to log higher libido and energy around the middle of your cycle.`;
+      subheadline = `Recurring pattern verified across your last ${matchedCyclesCount} cycles (Days 12–15)`;
+    } else {
+      headline = `Higher libido and energy have shown up around a similar time before.`;
+      subheadline = `Emerging pattern spotted around mid-cycle ovulation`;
+    }
+  } else if (hasCramps && hasLowEnergy && currentCycleDay <= 5) {
+    if (matchedCyclesCount >= 2) {
+      headline = `You often log cramps and lower energy during the first few days of your period.`;
+      subheadline = `Confirmed in ${matchedCyclesCount} of your recent cycles (Days 1–5)`;
+    } else {
+      headline = `Cramps and lower energy have appeared near the start of your recent cycles.`;
+      subheadline = `AURA is tracking your cycle reset rhythm`;
+    }
+  } else if (matchedCyclesCount >= 3) {
+    const formatted = selectedLabels.slice(0, 2).join(' and ').toLowerCase();
+    headline = `In your last 3 cycles, you tended to feel ${formatted} around days ${minDay}–${maxDay}.`;
+    subheadline = `Consistent pattern verified across ${matchedCyclesCount} of ${totalPastCyclesAnalyzed} recent cycles`;
+  } else if (matchedCyclesCount === 2) {
+    const formatted = selectedLabels.slice(0, 2).join(' and ').toLowerCase();
+    headline = `You've often logged ${formatted} around this point in your recent cycles.`;
+    subheadline = `Appeared in 2 comparable cycles around Cycle Day ${currentCycleDay}`;
+  } else if (matchedCyclesCount === 1) {
+    headline = `This has happened around a similar time before.`;
+    subheadline = `AURA spotted 1 matching cycle and is monitoring this pattern`;
+  } else {
+    headline = `AURA is still learning your patterns for this cycle window.`;
+    subheadline = `Cycle Day ${currentCycleDay} · ${phaseName}`;
+  }
+
+  // Biological context & suggestions (non-prescriptive, science-backed)
   let hormoneContext: PatternInsight['hormoneContext'] = undefined;
   let explanation = '';
   let actionableTip = '';
@@ -151,15 +296,12 @@ export function detectPatterns(
       progesteroneTrend: 'peaking',
       summary: 'Progesterone is elevated and begins its pre-menstrual descent.',
     };
-    if (selectedFeelingIds.includes('extra_hungry') || selectedFeelingIds.includes('craving')) {
-      explanation = 'Progesterone naturally increases your resting metabolic rate by 100–300 calories/day while serotonin dips. Your hunger is physiological fuel, not a lack of willpower.';
+    if (hasHighAppetite) {
+      explanation = 'Progesterone naturally increases resting metabolic rate by 100–300 calories/day while serotonin dips. Your hunger is physiological fuel, not a lack of willpower.';
       actionableTip = 'Honor this window with complex carbs, magnesium-rich foods (dark chocolate, pumpkin seeds), and warm, satiating meals.';
     } else if (selectedFeelingIds.includes('bloated') || selectedFeelingIds.includes('breast_tenderness')) {
       explanation = 'Hormonal fluctuations affect aldosterone and fluid retention in tissues, frequently causing a temporary fullness sensation before your period.';
       actionableTip = 'Increase hydration with electrolytes, herbal teas (dandelion, peppermint), and gentle walking to support lymphatic drainage.';
-    } else if (selectedFeelingIds.includes('irritable') || selectedFeelingIds.includes('anxious') || selectedFeelingIds.includes('sensitive')) {
-      explanation = 'As progesterone drops toward the end of your luteal phase, GABA receptors and serotonin adapt, making emotional boundaries and sensory inputs feel more intense.';
-      actionableTip = 'Give yourself permission to slow down, protect evening downtime, and avoid overcommitting social energy.';
     } else {
       explanation = 'Your luteal rhythm is an inward-looking phase where your body prepares for renewal, altering resting temperature and energy expenditure.';
       actionableTip = 'Prioritize consistent sleep and gentle, grounding movement.';
@@ -170,26 +312,16 @@ export function detectPatterns(
       progesteroneTrend: 'rising',
       summary: 'Estrogen and luteinizing hormone (LH) reach their cycle peak.',
     };
-    if (selectedFeelingIds.includes('high_flirty') || selectedFeelingIds.includes('energetic') || selectedFeelingIds.includes('happy')) {
-      explanation = 'Peak estrogen elevates dopamine, verbal fluidity, and confidence, while a mild testosterone surge amplifies sexual desire and social connection.';
-      actionableTip = 'Great time for key conversations, creative brainstorming, high-energy workouts, or intimacy.';
-    } else {
-      explanation = 'Around ovulation, heightened sensory perception and metabolic efficiency peak as your body releases an egg.';
-      actionableTip = 'Channel your natural vitality into passion projects and dynamic movement.';
-    }
+    explanation = 'Peak estrogen elevates dopamine, verbal fluidity, and confidence, while a mild testosterone surge amplifies sexual desire and social connection.';
+    actionableTip = 'Great time for key conversations, creative brainstorming, high-energy workouts, or intimacy.';
   } else if (phase === 'menstrual') {
     hormoneContext = {
       estrogenTrend: 'low',
       progesteroneTrend: 'low',
       summary: 'Both estrogen and progesterone are at baseline as the uterine lining renews.',
     };
-    if (selectedFeelingIds.includes('cramps') || selectedFeelingIds.includes('drained') || selectedFeelingIds.includes('headache')) {
-      explanation = 'Prostaglandins stimulate uterine contractions to shed the lining, which can also trigger fatigue and localized discomfort. Low hormones invite deep restorative rest.';
-      actionableTip = 'Apply heat therapy, replenish with iron and omega-3s, and reduce intense physical strain.';
-    } else {
-      explanation = 'Your body is undergoing an active cleansing and reset process, requiring quiet focus and cellular recovery.';
-      actionableTip = 'Treat this as a sacred recovery window for nervous system calm.';
-    }
+    explanation = 'Prostaglandins stimulate uterine contractions to shed the lining, which can trigger fatigue and localized discomfort. Low hormones invite deep restorative rest.';
+    actionableTip = 'Apply heat therapy, replenish with iron and omega-3s, and reduce intense physical strain.';
   } else {
     // Follicular
     hormoneContext = {
@@ -201,35 +333,9 @@ export function detectPatterns(
     actionableTip = 'Ideal window for starting new routines, learning complex skills, and increasing training intensity.';
   }
 
-  // Construct headline based on match count
-  const isStrongMatch = matchedCyclesCount >= 2;
-  const isMatch = matchedCyclesCount >= 1;
-
-  let headline = '';
-  let subheadline = '';
-
-  const symptomsFormatted = selectedLabels.join(', ').toLowerCase();
-
-  if (matchedCyclesCount >= 3) {
-    headline = `AURA noticed: You've felt ${symptomsFormatted} around this time in your last 3 cycles.`;
-    subheadline = `Recurring Day ${minDay}–${maxDay} pattern verified across ${matchedCyclesCount}/${totalPastCyclesAnalyzed} cycles`;
-  } else if (matchedCyclesCount === 2) {
-    headline = `AURA noticed: You also logged ${symptomsFormatted} around Cycle Day ${currentCycleDay} in 2 of your past cycles.`;
-    subheadline = `Emerging pattern spotted (${matchedCyclesCount}/${totalPastCyclesAnalyzed} cycles)`;
-  } else if (matchedCyclesCount === 1) {
-    headline = `AURA noticed: You logged similar sensations around this cycle window once before.`;
-    subheadline = `Single previous match · AURA is monitoring this emerging rhythm`;
-  } else {
-    headline = `AURA is still learning your patterns for this cycle window.`;
-    subheadline = `Cycle Day ${currentCycleDay} · ${phaseName}`;
-    if (!explanation) {
-      explanation = `As you log across subsequent cycles, AURA links your recurring feelings to your unique hormonal shifts.`;
-    }
-  }
-
   return {
     id: `insight-${currentCycleDay}-${selectedFeelingIds.join('-')}`,
-    isMatch,
+    isMatch: matchedCyclesCount >= 1,
     headline,
     subheadline,
     explanation,
@@ -240,14 +346,13 @@ export function detectPatterns(
     cycleDayRange: [minDay, maxDay],
     matchedCyclesCount,
     totalPastCyclesAnalyzed,
-    occurrences,
+    occurrences: matchingOccurrences,
     hormoneContext,
     actionableTip,
   };
 }
 
 export function getAllBodyReceipts(allLogs: DailyLog[], cycleLength: number = 28): BodyReceipt[] {
-  // Pre-calculate verified patterns from multi-cycle history
   const receipts: BodyReceipt[] = [
     {
       id: 'receipt-luteal-hunger',
@@ -260,10 +365,10 @@ export function getAllBodyReceipts(allLogs: DailyLog[], cycleLength: number = 28
       recurrenceRate: 100,
       cyclesPresentCount: 3,
       totalCyclesCount: 3,
-      headline: 'Consistent in 3 of your last 3 cycles',
+      headline: 'Confirmed across all 3 past cycles',
       patternDescription: 'You experience a pronounced increase in appetite and sweet/salty cravings 4 to 6 days before your period begins.',
       biologicalWhy: 'Progesterone elevates your resting metabolic rate by 100–300 kcal/day while serotonin dips prior to menses, creating genuine physiological hunger cues.',
-      quote: '"You\'ve felt extra hungry around this time in your last 3 cycles."',
+      quote: '"In your last 3 cycles, you tended to feel hungrier around days 22–26."',
     },
     {
       id: 'receipt-ovulation-vitality',
@@ -272,14 +377,14 @@ export function getAllBodyReceipts(allLogs: DailyLog[], cycleLength: number = 28
       feelingLabels: ['High / flirty', 'Energetic', 'Happy'],
       bucket: 'libido',
       phase: 'ovulatory',
-      cycleDaysRange: 'Days 13 – 16',
+      cycleDaysRange: 'Days 12 – 15',
       recurrenceRate: 100,
       cyclesPresentCount: 3,
       totalCyclesCount: 3,
-      headline: 'Confirmed across 3 recorded cycles',
+      headline: 'Confirmed in your last 3 cycles',
       patternDescription: 'A surge in spontaneous energy, confident social drive, and elevated libido reliably occurs around mid-cycle ovulation.',
       biologicalWhy: 'Estrogen reaches its cycle peak alongside a sharp LH surge and subtle testosterone spike, amplifying neuro-vitality and intimacy desire.',
-      quote: '"Your energy and flirty mood peak predictably at mid-cycle."',
+      quote: '"You tend to log higher libido and energy around the middle of your cycle."',
     },
     {
       id: 'receipt-luteal-bloat-mood',
@@ -311,7 +416,7 @@ export function getAllBodyReceipts(allLogs: DailyLog[], cycleLength: number = 28
       headline: 'Logged in all recorded cycle beginnings',
       patternDescription: 'The first 48–72 hours of your cycle consistently call for slower pacing, warmth, and restorative sleep.',
       biologicalWhy: 'Prostaglandins trigger uterine shedding while systemic estrogen and progesterone sit at baseline, signaling natural cellular recovery.',
-      quote: '"Your body asks for restorative rest and warmth during cycle reset."',
+      quote: '"You often log cramps and lower energy during the first few days of your period."',
     },
     {
       id: 'receipt-follicular-clarity',
