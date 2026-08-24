@@ -9,6 +9,10 @@ import { TodayLogger } from './components/TodayLogger';
 import { BodyReceiptsView } from './components/BodyReceiptsView';
 import { MyRhythmsView } from './components/MyRhythmsView';
 import { CycleHistoryLog } from './components/CycleHistoryLog';
+import { BodyAndMindView } from './components/BodyAndMindView';
+import { RightsAndSafetyView } from './components/RightsAndSafetyView';
+import { EmpowermentView } from './components/EmpowermentView';
+import { DiscreetModeView } from './components/DiscreetModeView';
 import { OnboardingModal } from './components/OnboardingModal';
 import { DailyLog, UserCycleProfile } from './types';
 import { generateSampleHistoricalLogs, getInitialCycleProfile } from './data/sampleHistoricalData';
@@ -49,6 +53,7 @@ export default function App() {
   const [currentTab, setCurrentTab] = useState<TabType>('today');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(() => !profile.onboardingCompleted);
+  const [isDiscreetMode, setIsDiscreetMode] = useState<boolean>(false);
 
   // Sync to localStorage
   useEffect(() => {
@@ -58,6 +63,17 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(allLogs));
   }, [allLogs]);
+
+  // Global Quick Escape with Escape key (press ESC to toggle Discreet mode instantly)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isSettingsOpen && !showOnboarding) {
+        setIsDiscreetMode((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSettingsOpen, showOnboarding]);
 
   // Handler for saving a new or updated daily log
   const handleSaveLog = (newLog: DailyLog) => {
@@ -98,6 +114,10 @@ export default function App() {
 
   const receipts = getAllBodyReceipts(allLogs, profile.averageCycleLength);
 
+  if (isDiscreetMode) {
+    return <DiscreetModeView onExitDiscreetMode={() => setIsDiscreetMode(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#2C2420] flex flex-col font-sans overflow-x-hidden">
       {/* Navigation */}
@@ -105,7 +125,7 @@ export default function App() {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onResetData={handleResetData}
+        onToggleDiscreetMode={() => setIsDiscreetMode(true)}
         receiptCount={receipts.length}
       />
 
@@ -128,6 +148,18 @@ export default function App() {
             cycleLength={profile.averageCycleLength}
             onNavigateToToday={() => setCurrentTab('today')}
           />
+        )}
+
+        {currentTab === 'body_mind' && (
+          <BodyAndMindView profile={profile} />
+        )}
+
+        {currentTab === 'rights_safety' && (
+          <RightsAndSafetyView />
+        )}
+
+        {currentTab === 'empowerment' && (
+          <EmpowermentView />
         )}
 
         {currentTab === 'rhythms' && (
@@ -167,14 +199,22 @@ export default function App() {
       <footer className="border-t border-[#EAE3D9] py-6 text-center text-xs text-[#8A7D73]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="font-serif-editorial text-sm text-[#54483E]">
-            AURA · Less tracking. More understanding yourself.
+            AURA · Biological rhythm intelligence, sovereign rights, safety & empowerment.
           </p>
           <div className="flex items-center gap-4 text-[11px]">
+            <button
+              onClick={() => setIsDiscreetMode(true)}
+              className="hover:text-[#8E3B22] underline cursor-pointer"
+              title="Discreet screen (Press ESC)"
+            >
+              Discreet Mode (ESC)
+            </button>
+            <span>·</span>
             <button
               onClick={handleResetData}
               className="hover:text-[#8E3B22] underline cursor-pointer"
             >
-              Reset to 3-Cycle Sample Data
+              Reset Sample Data
             </button>
             <span>·</span>
             <button

@@ -1,6 +1,6 @@
 {
   "name": "AURA",
-  "description": "A personal menstrual and hormonal rhythm tracker that spots recurring patterns across mood, appetite, energy, and sensations.",
+  "description": "Comprehensive women's health, hormonal rhythm tracking, cycle nutrition, reproductive rights, emergency safety, and financial empowerment platform.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
