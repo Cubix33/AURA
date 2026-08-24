@@ -99,7 +99,7 @@ export default function App() {
   const receipts = getAllBodyReceipts(allLogs, profile.averageCycleLength);
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-[#2C2420] flex flex-col font-sans">
+    <div className="min-h-screen bg-[#FAF8F5] text-[#2C2420] flex flex-col font-sans overflow-x-hidden">
       {/* Navigation */}
       <Navbar
         currentTab={currentTab}

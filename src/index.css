@@ -25,3 +25,12 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #CFC7BD;
 }
+
+/* Hide scrollbar for mobile nav but allow swipe */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
