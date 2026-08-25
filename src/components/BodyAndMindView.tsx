@@ -7,6 +7,8 @@ import {
   ShieldAlert,
   Sparkles,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Flame,
   Droplet,
   Activity,
@@ -19,7 +21,10 @@ import {
   BookOpen,
   Info,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  ArrowRight,
+  Compass,
+  Check
 } from 'lucide-react';
 import { UserCycleProfile, CyclePhase } from '../types';
 import {
@@ -50,6 +55,11 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
 
   const [selectedNutritionPhase, setSelectedNutritionPhase] = useState<string>(currentPhase);
   const [selectedSexualTopic, setSelectedSexualTopic] = useState<string>(SEXUAL_HEALTH_TOPICS[0].id);
+
+  // Progressive disclosure states
+  const [showFullNutritionRationale, setShowFullNutritionRationale] = useState<boolean>(false);
+  const [showFullMealGuide, setShowFullMealGuide] = useState<boolean>(false);
+  const [expandedRedFlag, setExpandedRedFlag] = useState<string | null>(null);
 
   // 4-7-8 Breathwork Interactive Engine
   const [isBreathingActive, setIsBreathingActive] = useState<boolean>(false);
@@ -110,87 +120,151 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
 
   const activeNutrition = NUTRITION_BY_PHASE[selectedNutritionPhase] || NUTRITION_BY_PHASE.menstrual;
 
+  // Personalized summary for today's phase
+  const getPhaseHighlight = (phase: CyclePhase) => {
+    switch (phase) {
+      case 'follicular':
+        return {
+          title: 'Rising Estrogen & High Stamina',
+          coreAction: 'Nourish follicle development with pumpkin & flax seeds and lean protein.',
+          tag: 'Follicular Focus (Days 6–12)',
+          color: 'text-[#3E7D59]',
+          bg: 'bg-[#F2F7F4]',
+          border: 'border-[#D2E6DB]',
+          cta: 'Explore Follicular Nutrition',
+          tab: 'nutrition' as const,
+        };
+      case 'ovulatory':
+        return {
+          title: 'Peak Estrogen & High Vitality',
+          coreAction: 'Prioritize zinc, leafy greens, antioxidant berries & hydration for fertile window clarity.',
+          tag: 'Ovulatory Peak (Days 13–16)',
+          color: 'text-[#C47525]',
+          bg: 'bg-[#FDF7EE]',
+          border: 'border-[#F5DCB5]',
+          cta: 'Check Fertility & Intimacy Guide',
+          tab: 'sexual_health' as const,
+        };
+      case 'luteal':
+        return {
+          title: 'Progesterone Surge & Natural Metabolic Rise',
+          coreAction: 'Switch to sunflower & sesame seed cycling, slow-burn complex carbs, and 4-7-8 vagus calming.',
+          tag: 'Luteal Phase (Days 17–28)',
+          color: 'text-[#8E3B22]',
+          bg: 'bg-[#FAF4EF]',
+          border: 'border-[#F1DDD1]',
+          cta: 'Launch 4-7-8 Breathwork',
+          tab: 'mental_health' as const,
+        };
+      default:
+        return {
+          title: 'Restorative Menstrual Flow & Pelvic Ease',
+          coreAction: 'Warm suprapubic heat therapy, anti-inflammatory ginger tea, and iron replenishment.',
+          tag: 'Menstrual Phase (Days 1–5)',
+          color: 'text-[#BF3D3D]',
+          bg: 'bg-[#FDF4F4]',
+          border: 'border-[#F7D8D8]',
+          cta: 'View Pelvic Relief Guide',
+          tab: 'nutrition' as const,
+        };
+    }
+  };
+
+  const phaseHighlight = getPhaseHighlight(currentPhase);
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16">
-      {/* Editorial Header Banner */}
-      <section className="bg-gradient-to-br from-[#FAF5F0] via-white to-[#F7EFE8] rounded-3xl p-6 md:p-8 border border-[#EDE2D5] shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-[#8E3B22] flex items-center gap-1.5">
-              <HeartPulse className="w-3.5 h-3.5" />
-              Physical, Sexual & Emotional Well-Being
-            </span>
-            <h1 className="font-serif-editorial text-2xl md:text-3xl text-[#2B231F] font-normal">
-              Nourishing Body & Mind
+    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+      {/* 1. DOMINANT HERO CARD: Recommended for You Today */}
+      <section className={`rounded-3xl p-6 sm:p-7 border ${phaseHighlight.bg} ${phaseHighlight.border} shadow-xs relative overflow-hidden transition-all`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/90 ${phaseHighlight.color} border border-black/5 shadow-2xs`}>
+                <Sparkles className="w-3.5 h-3.5" />
+                Recommended for you today
+              </span>
+              <span className="text-xs font-semibold text-[#7A6F66]">
+                Day {currentCycleDay} · {getPhaseDisplayName(currentPhase)}
+              </span>
+            </div>
+
+            <h1 className="font-serif-editorial text-2xl sm:text-3xl text-[#2B231F] font-normal leading-snug">
+              {phaseHighlight.title}
             </h1>
-            <p className="text-xs md:text-sm text-[#6B5E54]">
-              Science-grounded nutrition tailored to your cycle phases, sexual health sovereignty, and calming mental health tools.
+
+            <p className="text-xs sm:text-sm text-[#54483E] leading-relaxed">
+              {phaseHighlight.coreAction}
             </p>
           </div>
 
-          <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-2xl border border-[#E8DFD3] shrink-0 self-start md:self-auto shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-[#F5E8E0] text-[#8E3B22] flex flex-col items-center justify-center font-bold">
-              <span className="text-[9px] text-[#8A6A5E] font-medium leading-none">DAY</span>
-              <span className="text-base font-bold leading-none mt-0.5">{currentCycleDay}</span>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-[#2B231F]">{getPhaseDisplayName(currentPhase)}</p>
-              <p className="text-[11px] text-[#857970]">Active biological phase</p>
-            </div>
+          {/* Quick Action Button for Today's dominant recommendation */}
+          <div className="shrink-0 flex items-center gap-2 self-start md:self-auto">
+            <button
+              onClick={() => {
+                setActiveTab(phaseHighlight.tab);
+                if (phaseHighlight.tab === 'nutrition') {
+                  setSelectedNutritionPhase(currentPhase);
+                }
+              }}
+              className="px-5 py-2.5 rounded-xl bg-[#2B231F] text-white font-bold text-xs hover:bg-black transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+            >
+              <span>{phaseHighlight.cta}</span>
+              <ArrowRight className="w-3.5 h-3.5 text-[#E89E86]" />
+            </button>
           </div>
         </div>
-
-        {/* Sub-Nav Pill Tabs */}
-        <div className="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-[#EFE7DC]">
-          <button
-            onClick={() => setActiveTab('nutrition')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'nutrition'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <Apple className="w-3.5 h-3.5" />
-            Cycle Nutrition & Seed Cycling
-          </button>
-
-          <button
-            onClick={() => setActiveTab('sexual_health')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'sexual_health'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Sexual Health & Contraception
-          </button>
-
-          <button
-            onClick={() => setActiveTab('mental_health')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'mental_health'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <Brain className="w-3.5 h-3.5" />
-            Mental Health & 4-7-8 Breathwork
-          </button>
-
-          <button
-            onClick={() => setActiveTab('red_flags')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'red_flags'
-                ? 'bg-[#BF3D3D] text-white shadow-xs'
-                : 'bg-white text-[#8C3A3A] border border-[#F2D7D7] hover:bg-[#FDF4F4]'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            Symptom Alerts & Red Flags
-          </button>
-        </div>
       </section>
+
+      {/* 2. SUB-NAV TABS BAR (Answers "What can I do about how I feel?") */}
+      <div className="flex flex-wrap items-center gap-2 bg-[#FAF8F5] p-1.5 rounded-2xl border border-[#EAE3D9]">
+        <button
+          onClick={() => setActiveTab('nutrition')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'nutrition'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <Apple className="w-3.5 h-3.5 text-[#8E3B22]" />
+          Cycle Nutrition & Seed Cycling
+        </button>
+
+        <button
+          onClick={() => setActiveTab('sexual_health')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'sexual_health'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5 text-[#B84E7D]" />
+          Sexual Health & Contraception
+        </button>
+
+        <button
+          onClick={() => setActiveTab('mental_health')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'mental_health'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <Brain className="w-3.5 h-3.5 text-[#3E7D59]" />
+          Mental Health & 4-7-8 Breathwork
+        </button>
+
+        <button
+          onClick={() => setActiveTab('red_flags')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'red_flags'
+              ? 'bg-white text-[#BF3D3D] shadow-xs border border-[#F2D7D7]'
+              : 'text-[#8C3A3A] hover:bg-[#FDF4F4]'
+          }`}
+        >
+          <ShieldAlert className="w-3.5 h-3.5 text-[#BF3D3D]" />
+          Symptom Alerts & Red Flags
+        </button>
+      </div>
 
       {/* TAB 1: CYCLE NUTRITION & SEED CYCLING */}
       {activeTab === 'nutrition' && (
@@ -198,10 +272,10 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
           {/* Phase Selector Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { id: 'menstrual', label: '🩸 Menstrual (1–5)', color: '#C95C4F' },
-              { id: 'follicular', label: '🌿 Follicular (6–11)', color: '#5D8B6F' },
-              { id: 'ovulatory', label: '✨ Ovulatory (12–15)', color: '#D98A38' },
-              { id: 'luteal', label: '🌙 Luteal (16–28)', color: '#8F557E' },
+              { id: 'menstrual', label: '🩸 Menstrual (1–5)', color: '#BF3D3D' },
+              { id: 'follicular', label: '🌿 Follicular (6–12)', color: '#3E7D59' },
+              { id: 'ovulatory', label: '✨ Ovulatory (13–16)', color: '#C47525' },
+              { id: 'luteal', label: '🌙 Luteal (17–28)', color: '#8E3B22' },
             ].map((p) => {
               const isSelected = selectedNutritionPhase === p.id;
               const isCurrent = currentPhase === p.id;
@@ -211,7 +285,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                   onClick={() => setSelectedNutritionPhase(p.id)}
                   className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative ${
                     isSelected
-                      ? 'bg-white border-[#8E3B22] shadow-sm ring-1 ring-[#8E3B22]/30'
+                      ? 'bg-white border-[#8E3B22] shadow-xs ring-1 ring-[#8E3B22]/30'
                       : 'bg-[#FAF8F5] border-[#E8E0D5] hover:bg-white'
                   }`}
                 >
@@ -221,7 +295,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                     </span>
                   )}
                   <p className="text-xs font-bold text-[#2B231F]">{p.label}</p>
-                  <p className="text-[11px] text-[#7A6F66] mt-1 line-clamp-1">
+                  <p className="text-[11px] text-[#7A6F66] mt-0.5 line-clamp-1">
                     {NUTRITION_BY_PHASE[p.id]?.focus.split(',')[0]}
                   </p>
                 </button>
@@ -229,14 +303,21 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
             })}
           </div>
 
-          {/* Active Nutrition Details Card */}
+          {/* Active Nutrition Details */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left: Detailed Guidance */}
-            <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-[#E8E1D7] shadow-xs space-y-5">
-              <div className="space-y-1">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E3B22]">
-                  Phase Protocol
-                </span>
+            {/* Left: Phase Protocol */}
+            <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-7 border border-[#EAE3D9] shadow-xs space-y-5">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E3B22]">
+                    Phase Nutrition Protocol
+                  </span>
+                  {selectedNutritionPhase === currentPhase && (
+                    <span className="text-[10px] font-bold text-[#2C6E49] bg-[#EAF5EE] px-2 py-0.5 rounded-md">
+                      Active Phase Today
+                    </span>
+                  )}
+                </div>
                 <h2 className="font-serif-editorial text-2xl text-[#2B231F]">
                   {activeNutrition.title}
                 </h2>
@@ -245,14 +326,14 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                 </p>
               </div>
 
-              {/* Seed Cycling Module */}
+              {/* Seed Cycling Guide */}
               <div className="bg-[#FAF7F2] rounded-2xl p-4 border border-[#EAE1D5] flex items-start gap-3">
                 <div className="w-8 h-8 rounded-xl bg-[#F4E8E0] text-[#8E3B22] flex items-center justify-center shrink-0 mt-0.5">
                   <Sparkles className="w-4 h-4" />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 flex-1">
                   <h4 className="text-xs font-bold text-[#2B231F] uppercase tracking-wider">
-                    Seed Cycling Guide
+                    Seed Cycling Routine
                   </h4>
                   <p className="text-xs text-[#52453B] leading-relaxed">
                     {activeNutrition.seedCycling}
@@ -260,32 +341,33 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                 </div>
               </div>
 
-              {/* Micronutrients */}
+              {/* Key Micronutrients */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-[#7A6F66]">
-                  Key Micronutrients to prioritize
+                  Target Micronutrients
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   {activeNutrition.micronutrients.map((m, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1 rounded-lg text-xs font-semibold bg-[#F5EFE9] text-[#733723] border border-[#E9DDCE]"
+                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#F5EFE9] text-[#733723] border border-[#E9DDCE] flex items-center gap-1"
                     >
+                      <Check className="w-3 h-3 text-[#8E3B22]" />
                       {m}
                     </span>
                   ))}
                 </div>
               </div>
 
-              {/* Recommended Foods vs Limit */}
+              {/* Foods to Embrace vs Moderate */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#F2ECE4]">
                 <div className="space-y-2">
                   <h4 className="text-xs font-bold text-[#2D583F] flex items-center gap-1.5">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Foods to Embrace
+                    Foods to Prioritize
                   </h4>
-                  <ul className="space-y-1.5 text-xs text-[#52453B]">
-                    {activeNutrition.recommendedFoods.map((f, i) => (
+                  <ul className="space-y-1 text-xs text-[#52453B]">
+                    {activeNutrition.recommendedFoods.slice(0, 4).map((f, i) => (
                       <li key={i} className="flex items-start gap-1.5">
                         <span className="text-[#4B8361] mt-0.5">•</span>
                         <span>{f}</span>
@@ -299,8 +381,8 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                     <AlertTriangle className="w-3.5 h-3.5" />
                     Foods to Moderate
                   </h4>
-                  <ul className="space-y-1.5 text-xs text-[#6B5E54]">
-                    {activeNutrition.foodsToLimit.map((f, i) => (
+                  <ul className="space-y-1 text-xs text-[#6B5E54]">
+                    {activeNutrition.foodsToLimit.slice(0, 3).map((f, i) => (
                       <li key={i} className="flex items-start gap-1.5">
                         <span className="text-[#8E3B22] mt-0.5">•</span>
                         <span>{f}</span>
@@ -311,19 +393,19 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
               </div>
             </div>
 
-            {/* Right: Sample Daily Meal Plan */}
-            <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-7 border border-[#E8E1D7] shadow-xs space-y-4">
+            {/* Right: Daily Plate Summary */}
+            <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-[#EAE3D9] shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-serif-editorial text-xl text-[#2B231F]">
                   Sample Daily Plate
                 </h3>
-                <span className="text-[11px] font-semibold text-[#8E3B22] bg-[#FAF3EE] px-2.5 py-1 rounded-full border border-[#F1DFD5]">
+                <span className="text-[11px] font-semibold text-[#8E3B22] bg-[#FAF3EE] px-2.5 py-0.5 rounded-full border border-[#F1DFD5]">
                   Easy Prep
                 </span>
               </div>
 
-              <div className="space-y-3 text-xs">
-                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] space-y-1">
+              <div className="space-y-2.5 text-xs">
+                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] space-y-0.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A7D73] block">
                     Breakfast
                   </span>
@@ -332,7 +414,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] space-y-1">
+                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] space-y-0.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A7D73] block">
                     Lunch
                   </span>
@@ -341,7 +423,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] space-y-1">
+                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] space-y-0.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A7D73] block">
                     Dinner
                   </span>
@@ -350,7 +432,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] space-y-1">
+                <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] space-y-0.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A7D73] block">
                     Restorative Snack
                   </span>
@@ -367,7 +449,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
       {/* TAB 2: SEXUAL HEALTH & CONTRACEPTION */}
       {activeTab === 'sexual_health' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Topic Navigation List */}
+          {/* Topic Navigation */}
           <div className="lg:col-span-4 space-y-2.5">
             {SEXUAL_HEALTH_TOPICS.map((topic) => {
               const isSelected = selectedSexualTopic === topic.id;
@@ -375,9 +457,9 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                 <button
                   key={topic.id}
                   onClick={() => setSelectedSexualTopic(topic.id)}
-                  className={`w-full p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                  className={`w-full p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                     isSelected
-                      ? 'bg-[#2B231F] text-white border-[#2B231F] shadow-sm'
+                      ? 'bg-[#2B231F] text-white border-[#2B231F] shadow-xs'
                       : 'bg-white text-[#4A3E36] border-[#E8E1D7] hover:bg-[#FAF8F5]'
                   }`}
                 >
@@ -400,10 +482,10 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
               );
             })}
 
-            <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#EBE3D8] text-xs space-y-2 text-[#685D54]">
-              <p className="font-bold text-[#2B231F] flex items-center gap-1.5">
+            <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-[#EBE3D8] text-xs space-y-1 text-[#685D54]">
+              <p className="font-bold text-[#2B231F] flex items-center gap-1.5 text-[11px]">
                 <Info className="w-3.5 h-3.5 text-[#8E3B22]" />
-                Autonomy & Safety
+                Autonomy & Informed Consent
               </p>
               <p className="leading-relaxed text-[11px]">
                 Your body belongs solely to you. Health information here is educational and supports empowered decision-making.
@@ -412,18 +494,18 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
           </div>
 
           {/* Topic Detail View */}
-          <div className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-8 border border-[#E8E1D7] shadow-xs space-y-6">
+          <div className="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-7 border border-[#EAE3D9] shadow-xs space-y-5">
             {(() => {
               const currentTopic =
                 SEXUAL_HEALTH_TOPICS.find((t) => t.id === selectedSexualTopic) ||
                 SEXUAL_HEALTH_TOPICS[0];
               return (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E3B22]">
                       {currentTopic.category.replace('_', ' ')}
                     </span>
-                    <h2 className="font-serif-editorial text-2xl sm:text-3xl text-[#2B231F]">
+                    <h2 className="font-serif-editorial text-2xl text-[#2B231F]">
                       {currentTopic.title}
                     </h2>
                     <p className="text-xs sm:text-sm text-[#61544B] leading-relaxed">
@@ -432,15 +514,15 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                   </div>
 
                   {/* Key Facts */}
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-[#7A6F66]">
                       Essential Knowledge
                     </h4>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {currentTopic.keyFacts.map((fact, idx) => (
                         <div
                           key={idx}
-                          className="p-3.5 rounded-xl bg-[#FAF8F5] border border-[#ECE4DA] text-xs text-[#42372F] flex items-start gap-2.5 leading-relaxed"
+                          className="p-3 rounded-xl bg-[#FAF8F5] border border-[#ECE4DA] text-xs text-[#42372F] flex items-start gap-2.5 leading-relaxed"
                         >
                           <div className="w-5 h-5 rounded-full bg-[#F4E8E0] text-[#8E3B22] flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5">
                             {idx + 1}
@@ -452,15 +534,15 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                   </div>
 
                   {/* Action Tips */}
-                  <div className="space-y-2.5 pt-2 border-t border-[#F2ECE4]">
+                  <div className="space-y-2 pt-2 border-t border-[#F2ECE4]">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-[#8E3B22]">
                       Empowered Action & Self-Care
                     </h4>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       {currentTopic.actionTips.map((tip, idx) => (
                         <div
                           key={idx}
-                          className="p-3 rounded-xl bg-[#FDF9F7] border border-[#F4E3DC] text-xs text-[#633325] flex items-start gap-2 leading-relaxed font-medium"
+                          className="p-2.5 rounded-xl bg-[#FDF9F7] border border-[#F4E3DC] text-xs text-[#633325] flex items-start gap-2 leading-relaxed font-medium"
                         >
                           <CheckCircle2 className="w-4 h-4 text-[#8E3B22] shrink-0 mt-0.5" />
                           <span>{tip}</span>
@@ -479,7 +561,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
       {activeTab === 'mental_health' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left: 4-7-8 Breathing Guide */}
-          <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 border border-[#E8E1D7] shadow-xs flex flex-col items-center text-center space-y-6">
+          <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-7 border border-[#EAE3D9] shadow-xs flex flex-col items-center text-center space-y-5">
             <div className="space-y-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E3B22]">
                 Parasympathetic Nervous System Reset
@@ -493,7 +575,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
             </div>
 
             {/* Interactive Animated Pulsing Circle */}
-            <div className="relative w-52 h-52 flex items-center justify-center">
+            <div className="relative w-48 h-48 flex items-center justify-center">
               <motion.div
                 animate={{
                   scale:
@@ -513,21 +595,21 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                   duration: breathPhase === 'Inhale' ? 4 : breathPhase === 'Hold' ? 0.2 : 8,
                   ease: 'easeInOut',
                 }}
-                className="w-44 h-44 rounded-full border-2 border-[#8E3B22]/30 flex flex-col items-center justify-center shadow-inner"
+                className="w-40 h-40 rounded-full border-2 border-[#8E3B22]/30 flex flex-col items-center justify-center shadow-inner"
               >
                 <span className="text-xs uppercase font-bold tracking-widest text-[#8E3B22]">
                   {isBreathingActive ? breathPhase : 'Ready'}
                 </span>
-                <span className="font-serif-editorial text-4xl font-normal text-[#2B231F] mt-1">
+                <span className="font-serif-editorial text-3xl font-normal text-[#2B231F] mt-0.5">
                   {isBreathingActive ? breathCount : '4-7-8'}
                 </span>
                 <span className="text-[10px] text-[#8C7E74] mt-0.5">
                   {isBreathingActive
                     ? breathPhase === 'Inhale'
-                      ? 'Nose breath'
+                      ? 'Nose inhale'
                       : breathPhase === 'Hold'
                       ? 'Gently retain'
-                      : 'Mouth release'
+                      : 'Mouth exhale'
                     : 'Tap play to begin'}
                 </span>
               </motion.div>
@@ -538,7 +620,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
               <button
                 type="button"
                 onClick={toggleBreathing}
-                className="px-6 py-2.5 rounded-xl bg-[#8E3B22] text-white text-xs font-bold hover:bg-[#722E1A] transition-all flex items-center gap-2 cursor-pointer shadow-xs"
+                className="px-5 py-2.5 rounded-xl bg-[#8E3B22] text-white text-xs font-bold hover:bg-[#722E1A] transition-all flex items-center gap-2 cursor-pointer shadow-xs"
               >
                 {isBreathingActive ? (
                   <>
@@ -546,7 +628,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                   </>
                 ) : (
                   <>
-                    <Play className="w-3.5 h-3.5" /> Start Breathwork
+                    <Play className="w-3.5 h-3.5 fill-current" /> Start Breathwork
                   </>
                 )}
               </button>
@@ -567,16 +649,16 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
           </div>
 
           {/* Right: Cycle-Linked Emotional Journal & Helplines */}
-          <div className="lg:col-span-6 space-y-6">
-            {/* Emotional Journal Prompt */}
-            <div className="bg-white rounded-3xl p-6 border border-[#E8E1D7] shadow-xs space-y-3">
+          <div className="lg:col-span-6 space-y-5">
+            {/* Emotional Journal */}
+            <div className="bg-white rounded-3xl p-6 border border-[#EAE3D9] shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-serif-editorial text-lg text-[#2B231F]">
-                    Cycle-Linked Emotional Reflection
+                    Emotional Reflection
                   </h3>
                   <p className="text-xs text-[#7A6F66]">
-                    Today is Day {currentCycleDay} ({getPhaseDisplayName(currentPhase)}). Express what's in your heart.
+                    Day {currentCycleDay} ({getPhaseDisplayName(currentPhase)}). Express what's in your heart.
                   </p>
                 </div>
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#FAF5F0] text-[#8E3B22] border border-[#EFE5DC]">
@@ -589,7 +671,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                 onChange={(e) => setJournalNote(e.target.value)}
                 rows={3}
                 placeholder="How is your inner world feeling right now? Any noticeable thoughts or emotional shifts..."
-                className="w-full text-xs p-3.5 rounded-xl border border-[#E3D9CD] bg-[#FAF8F5] focus:outline-none focus:ring-1 focus:ring-[#8E3B22] text-[#2B231F]"
+                className="w-full text-xs p-3 rounded-xl border border-[#E3D9CD] bg-[#FAF8F5] focus:outline-none focus:ring-1 focus:ring-[#8E3B22] text-[#2B231F] resize-none"
               />
 
               <div className="flex items-center justify-between">
@@ -614,15 +696,15 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
             </div>
 
             {/* Psychological Helplines Directory */}
-            <div className="bg-white rounded-3xl p-6 border border-[#E8E1D7] shadow-xs space-y-3.5">
+            <div className="bg-white rounded-3xl p-6 border border-[#EAE3D9] shadow-xs space-y-3">
               <h3 className="font-serif-editorial text-lg text-[#2B231F]">
                 Psychological Crisis & Support Helplines
               </h3>
-              <div className="space-y-2.5">
-                {MENTAL_HEALTH_DATA.map((hl) => (
+              <div className="space-y-2">
+                {MENTAL_HEALTH_DATA.slice(0, 2).map((hl) => (
                   <div
                     key={hl.id}
-                    className="p-3.5 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] text-xs space-y-1.5"
+                    className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EDE5DB] text-xs space-y-1"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <h4 className="font-bold text-[#2B231F]">{hl.title}</h4>
@@ -651,7 +733,7 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
 
       {/* TAB 4: RED FLAGS & ABNORMAL SYMPTOMS */}
       {activeTab === 'red_flags' && (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <div className="p-4 rounded-2xl bg-[#FDF4F4] border border-[#F5D5D5] flex items-start gap-3">
             <ShieldAlert className="w-5 h-5 text-[#BF3D3D] shrink-0 mt-0.5" />
             <div className="space-y-1 text-xs">
@@ -659,51 +741,65 @@ export const BodyAndMindView: React.FC<BodyAndMindViewProps> = ({ profile, initi
                 Medical Safety & Clinical Consultation Guidance
               </h3>
               <p className="text-[#8A3B3B] leading-relaxed">
-                AURA is a rhythm and self-awareness tracking tool. It is <strong>not</strong> a substitute for clinical diagnostics or professional gynecological care. If you experience acute symptoms listed below, reach out to your physician or local urgent care center.
+                AURA is a rhythm and self-awareness tracking tool. It is <strong>not</strong> a substitute for clinical diagnostics or professional gynecological care. If you experience acute symptoms below, consult a healthcare provider.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {RED_FLAG_SYMPTOMS.map((rf) => (
-              <div
-                key={rf.id}
-                className="bg-white rounded-3xl p-6 border border-[#EAE2D7] shadow-xs space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FDF1F1] text-[#BF3D3D] border border-[#F8D2D2]">
-                      {rf.category} alert
-                    </span>
-                    <span className="text-xs font-semibold text-[#8C7D72]">
-                      Action: {rf.urgency === 'immediate' ? 'Immediate Urgent Care' : 'Schedule Clinical Visit'}
-                    </span>
-                  </div>
+            {RED_FLAG_SYMPTOMS.map((rf) => {
+              const isExpanded = expandedRedFlag === rf.id;
+              return (
+                <div
+                  key={rf.id}
+                  className="bg-white rounded-3xl p-5 border border-[#EAE2D7] shadow-xs space-y-3 flex flex-col justify-between"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FDF1F1] text-[#BF3D3D] border border-[#F8D2D2]">
+                        {rf.category} alert
+                      </span>
+                      <span className="text-xs font-semibold text-[#8C7D72]">
+                        {rf.urgency === 'immediate' ? 'Immediate Urgent Care' : 'Schedule Visit'}
+                      </span>
+                    </div>
 
-                  <h3 className="font-serif-editorial text-lg text-[#2B231F] font-semibold">
-                    {rf.symptom}
-                  </h3>
+                    <h3 className="font-serif-editorial text-lg text-[#2B231F] font-semibold">
+                      {rf.symptom}
+                    </h3>
 
-                  <p className="text-xs text-[#54483E] leading-relaxed">
-                    {rf.description}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-[#F2ECE4] space-y-2 text-xs">
-                  <div className="p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE0D4] space-y-1">
-                    <span className="font-bold text-[#8E3B22] block text-[11px]">
-                      Why a doctor should check this:
-                    </span>
-                    <p className="text-[#665A51] text-[11px] leading-relaxed">
-                      {rf.whenToConsult}
+                    <p className="text-xs text-[#54483E] leading-relaxed">
+                      {rf.description}
                     </p>
                   </div>
-                  <p className="text-[10px] text-[#918377] italic">
-                    "{rf.disclaimer}"
-                  </p>
+
+                  <div className="pt-2 border-t border-[#F2ECE4]">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedRedFlag(isExpanded ? null : rf.id)}
+                      className="text-xs font-bold text-[#8E3B22] flex items-center justify-between w-full cursor-pointer py-1"
+                    >
+                      <span>{isExpanded ? 'Hide clinical details' : 'When to see a doctor'}</span>
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-2 p-3 rounded-xl bg-[#FAF7F2] border border-[#EAE0D4] text-xs space-y-1">
+                        <span className="font-bold text-[#8E3B22] block text-[11px]">
+                          Clinical Recommendation:
+                        </span>
+                        <p className="text-[#665A51] text-[11px] leading-relaxed">
+                          {rf.whenToConsult}
+                        </p>
+                        <p className="text-[10px] text-[#918377] italic pt-1 border-t border-[#EDE4D8]">
+                          "{rf.disclaimer}"
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

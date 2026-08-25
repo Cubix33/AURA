@@ -17,7 +17,8 @@ import {
   Building2,
   Navigation,
   Info,
-  Radio
+  Radio,
+  ArrowRight
 } from 'lucide-react';
 import {
   LEGAL_RIGHTS_DATA,
@@ -29,7 +30,7 @@ import { SafeZonePoint, LegalRightTopic } from '../types/wellnessTypes';
 export const RightsAndSafetyView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'safety_emergency' | 'safe_map' | 'legal_rights' | 'harassment_report'>('safety_emergency');
 
-  // Emergency SOS simulator state
+  // Emergency SOS state
   const [sosActive, setSosActive] = useState<boolean>(false);
   const [selectedSafeType, setSelectedSafeType] = useState<string>('all');
   const [expandedLegalTopic, setExpandedLegalTopic] = useState<string>(LEGAL_RIGHTS_DATA[0].id);
@@ -62,31 +63,45 @@ export const RightsAndSafetyView: React.FC = () => {
       : SAFE_ZONES_DATA.filter((p) => p.type === selectedSafeType);
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16">
-      {/* Header Banner */}
-      <section className="bg-gradient-to-br from-[#FAF5F0] via-white to-[#F6EDE4] rounded-3xl p-6 md:p-8 border border-[#EAE0D3] shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-[#8E3B22] flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5" />
-              Sovereignty, Legal Rights & Safety
-            </span>
-            <h1 className="font-serif-editorial text-2xl md:text-3xl text-[#2B231F] font-normal">
-              Protection, Policies & Emergency Help
+    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+      {/* 1. DOMINANT HERO: Emergency SOS & Immediate Assistance */}
+      <section className="bg-gradient-to-br from-[#2B231F] via-[#352B26] to-[#201A17] text-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#443831] relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#BF3D3D] text-white shadow-2xs">
+                <Radio className="w-3.5 h-3.5 animate-pulse" />
+                Immediate Protection & 24/7 Hotlines
+              </span>
+              <span className="text-xs font-semibold text-[#C7BCB3]">
+                Free & Confidential
+              </span>
+            </div>
+
+            <h1 className="font-serif-editorial text-2xl sm:text-3xl lg:text-4xl text-[#FAF7F2] font-normal leading-snug">
+              Need immediate help or protection?
             </h1>
-            <p className="text-xs md:text-sm text-[#6B5E54]">
-              Immediate access to emergency hotlines, verified community safe zones, plain-language legal rights, and confidential incident reporting.
+
+            <p className="text-xs sm:text-sm text-[#D1C6BC] leading-relaxed">
+              Línea 100 is available toll-free 24/7 across Peru from any mobile or landline, even without credit. Police emergency is 105.
             </p>
           </div>
 
-          {/* Quick SOS Trigger Button */}
-          <div className="shrink-0 self-start md:self-auto">
+          <div className="flex flex-wrap sm:flex-nowrap gap-3 shrink-0">
+            <a
+              href="tel:100"
+              className="px-5 py-3 rounded-2xl bg-[#BF3D3D] text-white font-bold text-xs hover:bg-[#A82B2B] transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+            >
+              <PhoneCall className="w-4 h-4" />
+              <span>Call Línea 100</span>
+            </a>
+
             <button
               onClick={handleTriggerSOS}
-              className="px-5 py-3 rounded-2xl bg-[#BF3D3D] text-white font-bold text-xs hover:bg-[#A82B2B] active:scale-95 transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              className="px-5 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-xs hover:bg-white/20 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <Radio className="w-4 h-4 animate-pulse" />
-              <span>{sosActive ? 'Emergency Hotlines Triggered' : 'Quick Emergency Action'}</span>
+              <Radio className="w-4 h-4 text-[#E89E86]" />
+              <span>{sosActive ? 'Hotlines Shown Below' : 'Show All Emergency Contacts'}</span>
             </button>
           </div>
         </div>
@@ -98,12 +113,12 @@ export const RightsAndSafetyView: React.FC = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mt-4 p-4 rounded-2xl bg-[#FDF1F1] border border-[#F5C7C7] text-xs text-[#8A2626] flex items-start justify-between gap-3 overflow-hidden"
+              className="mt-5 p-4 rounded-2xl bg-[#FDF1F1] border border-[#F5C7C7] text-xs text-[#8A2626] flex items-start justify-between gap-3 overflow-hidden"
             >
               <div className="space-y-1">
-                <p className="font-bold flex items-center gap-1.5">
+                <p className="font-bold flex items-center gap-1.5 text-xs">
                   <PhoneCall className="w-3.5 h-3.5 text-[#BF3D3D]" />
-                  Emergency Hotlines Available (Free & 24/7):
+                  Emergency Hotlines (Free 24/7):
                 </p>
                 <p className="text-[11px] text-[#782323]">
                   <strong>Línea 100 (MIMP Peru)</strong>: Dial 100 | <strong>PNP Police</strong>: Dial 105 | <strong>SAMU Ambulance</strong>: Dial 106
@@ -118,58 +133,58 @@ export const RightsAndSafetyView: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-[#EFE7DC]">
-          <button
-            onClick={() => setActiveTab('safety_emergency')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'safety_emergency'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <PhoneCall className="w-3.5 h-3.5" />
-            Emergency Contacts & Línea 100
-          </button>
-
-          <button
-            onClick={() => setActiveTab('safe_map')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'safe_map'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <MapPin className="w-3.5 h-3.5" />
-            Safe Routes & Points of Refuge
-          </button>
-
-          <button
-            onClick={() => setActiveTab('legal_rights')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'legal_rights'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <Scale className="w-3.5 h-3.5" />
-            Public Policies & Legal Rights
-          </button>
-
-          <button
-            onClick={() => setActiveTab('harassment_report')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'harassment_report'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            Anonymous Harassment Report
-          </button>
-        </div>
       </section>
+
+      {/* 2. SUB-NAV TABS BAR */}
+      <div className="flex flex-wrap items-center gap-2 bg-[#FAF8F5] p-1.5 rounded-2xl border border-[#EAE3D9]">
+        <button
+          onClick={() => setActiveTab('safety_emergency')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'safety_emergency'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <PhoneCall className="w-3.5 h-3.5 text-[#BF3D3D]" />
+          Emergency Hotlines (Línea 100)
+        </button>
+
+        <button
+          onClick={() => setActiveTab('safe_map')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'safe_map'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <MapPin className="w-3.5 h-3.5 text-[#3E7D59]" />
+          Safe Zones & Refuge Network
+        </button>
+
+        <button
+          onClick={() => setActiveTab('legal_rights')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'legal_rights'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <Scale className="w-3.5 h-3.5 text-[#8E3B22]" />
+          Legal Rights & Protections
+        </button>
+
+        <button
+          onClick={() => setActiveTab('harassment_report')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'harassment_report'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5 text-[#B84E7D]" />
+          Anonymous Incident Report
+        </button>
+      </div>
 
       {/* TAB 1: EMERGENCY HOTLINES */}
       {activeTab === 'safety_emergency' && (
@@ -223,7 +238,7 @@ export const RightsAndSafetyView: React.FC = () => {
             ))}
           </div>
 
-          {/* Quick Safety Steps */}
+          {/* Quick Safety Protocol */}
           <div className="bg-[#FAF7F2] rounded-3xl p-6 border border-[#EAE0D3] space-y-3">
             <h3 className="font-serif-editorial text-lg text-[#2B231F] flex items-center gap-2">
               <Shield className="w-4 h-4 text-[#8E3B22]" />
@@ -253,10 +268,10 @@ export const RightsAndSafetyView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: SAFE ROUTES & REFUGE POINTS MAP SIMULATOR */}
+      {/* TAB 2: SAFE ROUTES & REFUGE NETWORK */}
       {activeTab === 'safe_map' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left: Map Simulator Graphic */}
+          {/* Schematic Map Canvas */}
           <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-[#E8E1D7] shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -275,10 +290,8 @@ export const RightsAndSafetyView: React.FC = () => {
 
             {/* Visual Schematic Map Canvas */}
             <div className="w-full h-64 rounded-2xl bg-[#FAF8F5] border border-[#ECE3D8] relative overflow-hidden flex items-center justify-center p-4">
-              {/* Map grid lines */}
               <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#8E3B22_1px,transparent_1px)] [background-size:16px_16px]" />
               
-              {/* Central User Location */}
               <div className="relative z-10 flex flex-col items-center">
                 <div className="w-5 h-5 rounded-full bg-[#8E3B22] border-2 border-white shadow-md flex items-center justify-center animate-ping opacity-75" />
                 <div className="w-4 h-4 rounded-full bg-[#8E3B22] border-2 border-white shadow-md absolute top-0.5" />
@@ -287,7 +300,6 @@ export const RightsAndSafetyView: React.FC = () => {
                 </span>
               </div>
 
-              {/* Point Markers scattered */}
               <div className="absolute top-6 left-10 p-2 rounded-xl bg-white border border-[#E8DFD3] shadow-xs text-[10px] font-bold text-[#2B231F] flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#4B8361]" />
                 Comisaría de Mujeres (0.4 km)
@@ -323,7 +335,7 @@ export const RightsAndSafetyView: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Point Directory List */}
+          {/* Point Directory List */}
           <div className="lg:col-span-5 space-y-3">
             <h3 className="font-serif-editorial text-lg text-[#2B231F]">
               Verified Safe Locations
@@ -416,7 +428,6 @@ export const RightsAndSafetyView: React.FC = () => {
                           </div>
                         )}
 
-                        {/* Practical Rights */}
                         <div className="space-y-2">
                           <h4 className="font-bold text-[#2B231F] uppercase tracking-wider text-[11px]">
                             What the law guarantees you:
@@ -434,7 +445,6 @@ export const RightsAndSafetyView: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* How to claim */}
                         <div className="space-y-2 pt-2 border-t border-[#F2ECE4]">
                           <h4 className="font-bold text-[#8E3B22] uppercase tracking-wider text-[11px]">
                             How to exercise or file a claim:

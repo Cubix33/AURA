@@ -10,7 +10,9 @@ import {
   Zap,
   Droplet,
   Info,
-  Clock
+  Clock,
+  Compass,
+  ArrowRight
 } from 'lucide-react';
 import { getFeelingLabel } from '../data/feelingsData';
 import { CyclePhase, DailyLog } from '../types';
@@ -28,7 +30,6 @@ export const MyRhythmsView: React.FC<MyRhythmsViewProps> = ({
   periodLength,
 }) => {
   const [inspectedDay, setInspectedDay] = useState<number>(24);
-  const [selectedRhythmCategory, setSelectedRhythmCategory] = useState<string>('all');
 
   const inspectedPhase = getCyclePhase(inspectedDay, cycleLength, periodLength);
   const phaseTitle = getPhaseDisplayName(inspectedPhase);
@@ -59,69 +60,135 @@ export const MyRhythmsView: React.FC<MyRhythmsViewProps> = ({
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16">
-      {/* Header */}
-      <section className="bg-gradient-to-b from-white to-[#FAF6F0] rounded-3xl p-6 md:p-8 border border-[#EDE5DB] shadow-xs">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase bg-[#F0EBE3] text-[#544940] mb-2">
-          <Activity className="w-3.5 h-3.5 text-[#8E3B22]" />
-          Cycle Rhythm Map
-        </div>
-        <h1 className="font-serif-editorial text-3xl md:text-4xl text-[#2B231F] font-normal">
-          My Biological Rhythms
-        </h1>
-        <p className="text-[#6E635A] text-sm md:text-base mt-2 max-w-2xl">
-          Observe how your appetite, mood, energy, libido, and physical sensations transition across each phase of your {cycleLength}-day cycle.
-        </p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+      {/* 1. DOMINANT HERO: Active Day Trajectory & Biological State */}
+      <section className="bg-gradient-to-br from-[#2B231F] via-[#352B26] to-[#201A17] text-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#443831] relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#8E3B22] text-white shadow-2xs">
+                <Activity className="w-3.5 h-3.5 text-[#E89E86]" />
+                Biological Rhythm Trajectory
+              </span>
+              <span className="text-xs font-semibold text-[#C7BCB3]">
+                Inspecting Day {inspectedDay} · {phaseTitle}
+              </span>
+            </div>
 
-        {/* 4 Phases Overview Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-[#EAE3D9]">
-          <div className="bg-[#FAF3F2] border border-[#F0D5D0] rounded-2xl p-4">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-[#B84E3E]">
-              Days 1–{periodLength}
-            </span>
-            <h3 className="font-serif-editorial text-lg text-[#2B231F] font-normal mt-0.5">Menstrual</h3>
-            <p className="text-xs text-[#6B5A54] mt-1">Cramps, low baseline, restorative quiet.</p>
+            <h1 className="font-serif-editorial text-2xl sm:text-3xl lg:text-4xl text-[#FAF7F2] font-normal leading-snug">
+              {inspectedPhase === 'luteal' && 'Progesterone Surge & Natural Caloric Burn'}
+              {inspectedPhase === 'ovulatory' && 'Estrogen Peak, High Confidence & Vitality'}
+              {inspectedPhase === 'follicular' && 'Rising Estrogen, Mental Focus & Physical Stamina'}
+              {inspectedPhase === 'menstrual' && 'Baseline Recovery, Pelvic Care & Restorative Quiet'}
+            </h1>
+
+            <p className="text-xs sm:text-sm text-[#D1C6BC] leading-relaxed">
+              {phaseDesc}
+            </p>
           </div>
 
-          <div className="bg-[#F2F7F4] border border-[#D2E6DB] rounded-2xl p-4">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-[#3E7D59]">
-              Days {periodLength + 1}–12
+          <div className="bg-white/10 backdrop-blur-md px-5 py-4 rounded-2xl border border-white/15 shrink-0 self-start lg:self-auto text-left lg:text-right">
+            <span className="text-[10px] text-[#E89E86] uppercase font-bold tracking-widest block">
+              Inspected Day
             </span>
-            <h3 className="font-serif-editorial text-lg text-[#2B231F] font-normal mt-0.5">Follicular</h3>
-            <p className="text-xs text-[#52665B] mt-1">Estrogen rises, mental clarity & stamina build.</p>
-          </div>
-
-          <div className="bg-[#FDF7EE] border border-[#F5DCB5] rounded-2xl p-4">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-[#C47525]">
-              Days 13–16
-            </span>
-            <h3 className="font-serif-editorial text-lg text-[#2B231F] font-normal mt-0.5">Ovulatory</h3>
-            <p className="text-xs text-[#7A5B3D] mt-1">Peak estrogen & LH, flirty high energy.</p>
-          </div>
-
-          <div className="bg-[#F7F2F6] border border-[#E3D1E0] rounded-2xl p-4">
-            <span className="text-[10px] font-bold tracking-widest uppercase text-[#8F4E80]">
-              Days 17–{cycleLength}
-            </span>
-            <h3 className="font-serif-editorial text-lg text-[#2B231F] font-normal mt-0.5">Luteal</h3>
-            <p className="text-xs text-[#665262] mt-1">Progesterone surges; appetite & bloat emerge.</p>
+            <div className="text-3xl font-serif-editorial font-bold text-white mt-0.5">
+              Day {inspectedDay}
+            </div>
+            <p className="text-xs text-[#D1C6BC] mt-0.5">
+              {matchingLogsForDay.length} multi-cycle receipts recorded
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Interactive 28-Day Heatmap & Wheel */}
-      <section className="bg-white rounded-3xl p-6 md:p-8 border border-[#EAE3D9] shadow-xs space-y-6">
+      {/* 2. 4 PHASES SNAPSHOT STRIP */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          {
+            phase: 'menstrual',
+            range: `Days 1–${periodLength}`,
+            title: 'Menstrual',
+            summary: 'Pelvic rest & iron replenishment',
+            color: '#BF3D3D',
+            bg: 'bg-[#FDF4F4]',
+            border: 'border-[#F7D8D8]',
+            activeBg: 'ring-2 ring-[#BF3D3D]',
+          },
+          {
+            phase: 'follicular',
+            range: `Days ${periodLength + 1}–12`,
+            title: 'Follicular',
+            summary: 'Rising stamina & mental acuity',
+            color: '#3E7D59',
+            bg: 'bg-[#F2F7F4]',
+            border: 'border-[#D2E6DB]',
+            activeBg: 'ring-2 ring-[#3E7D59]',
+          },
+          {
+            phase: 'ovulatory',
+            range: 'Days 13–16',
+            title: 'Ovulatory',
+            summary: 'Fertile peak & high energy',
+            color: '#C47525',
+            bg: 'bg-[#FDF7EE]',
+            border: 'border-[#F5DCB5]',
+            activeBg: 'ring-2 ring-[#C47525]',
+          },
+          {
+            phase: 'luteal',
+            range: `Days 17–${cycleLength}`,
+            title: 'Luteal',
+            summary: 'Progesterone surge & calming needs',
+            color: '#8E3B22',
+            bg: 'bg-[#FAF4EF]',
+            border: 'border-[#F1DDD1]',
+            activeBg: 'ring-2 ring-[#8E3B22]',
+          },
+        ].map((p) => {
+          const isActive = inspectedPhase === p.phase;
+          return (
+            <div
+              key={p.phase}
+              className={`rounded-2xl p-3.5 border transition-all ${p.bg} ${p.border} ${
+                isActive ? `${p.activeBg} shadow-xs` : 'opacity-85'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold tracking-widest uppercase text-[#7A6F66]">
+                  {p.range}
+                </span>
+                {isActive && (
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-white/90 shadow-2xs text-[#2B231F]">
+                    Selected
+                  </span>
+                )}
+              </div>
+              <h3 className="font-serif-editorial text-base text-[#2B231F] font-bold mt-1">
+                {p.title}
+              </h3>
+              <p className="text-[11px] text-[#594E45] mt-0.5 leading-snug">
+                {p.summary}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3. 28-DAY INTERACTIVE HEATMAP STRIP */}
+      <section className="bg-white rounded-3xl p-6 border border-[#EAE3D9] shadow-xs space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-[#2B231F]">28-Day Feeling Heatmap</h2>
-            <p className="text-xs text-[#8A7D73]">
-              Click any day below to inspect historical sensation logs and hormonal trajectory.
+            <h2 className="text-sm font-bold text-[#2B231F] uppercase tracking-wider">
+              Cycle Day Explorer
+            </h2>
+            <p className="text-xs text-[#7A6F66]">
+              Click any day across your {cycleLength}-day cycle to inspect verified logs and hormone curves.
             </p>
           </div>
 
-          <div className="text-xs font-semibold text-[#8E3B22] bg-[#FAF5F2] px-3 py-1 rounded-lg border border-[#F2E3DB]">
+          <span className="text-xs font-semibold text-[#8E3B22] bg-[#FAF5F2] px-3 py-1 rounded-xl border border-[#F2E3DB]">
             Selected: Day {inspectedDay} ({phaseTitle})
-          </div>
+          </span>
         </div>
 
         {/* Days Strip */}
@@ -131,11 +198,11 @@ export const MyRhythmsView: React.FC<MyRhythmsViewProps> = ({
             const isSelected = inspectedDay === day;
             const symptomCount = getDayTotalSymptoms(day);
 
-            let bgClass = 'bg-[#FAF7F2] text-[#594E45]';
-            if (phase === 'menstrual') bgClass = 'bg-[#FBEAE8] text-[#8C3427] border-[#F2CDC8]';
-            else if (phase === 'follicular') bgClass = 'bg-[#EBF5EF] text-[#28593E] border-[#CCE5D5]';
-            else if (phase === 'ovulatory') bgClass = 'bg-[#FDF3E3] text-[#8F5518] border-[#F5DCB5]';
-            else bgClass = 'bg-[#F5EBF4] text-[#69345D] border-[#E3CCE0]';
+            let bgClass = 'bg-[#FAF7F2] text-[#594E45] border-[#EAE1D5]';
+            if (phase === 'menstrual') bgClass = 'bg-[#FDF4F4] text-[#8C3427] border-[#F7D8D8]';
+            else if (phase === 'follicular') bgClass = 'bg-[#F2F7F4] text-[#28593E] border-[#D2E6DB]';
+            else if (phase === 'ovulatory') bgClass = 'bg-[#FDF7EE] text-[#8F5518] border-[#F5DCB5]';
+            else bgClass = 'bg-[#FAF4EF] text-[#7A3622] border-[#F1DDD1]';
 
             return (
               <button
@@ -143,8 +210,8 @@ export const MyRhythmsView: React.FC<MyRhythmsViewProps> = ({
                 onClick={() => setInspectedDay(day)}
                 className={`p-2 rounded-xl text-center flex flex-col items-center justify-between transition-all border cursor-pointer ${bgClass} ${
                   isSelected
-                    ? 'ring-2 ring-[#2E2420] shadow-md scale-105 z-10'
-                    : 'hover:scale-102 hover:shadow-xs'
+                    ? 'ring-2 ring-[#2B231F] shadow-sm scale-105 z-10'
+                    : 'hover:scale-102 hover:shadow-2xs'
                 }`}
               >
                 <span className="text-[10px] font-bold">{day}</span>
@@ -163,20 +230,20 @@ export const MyRhythmsView: React.FC<MyRhythmsViewProps> = ({
         </div>
 
         {/* Inspected Day Details Card */}
-        <div className="bg-[#FAF8F5] rounded-2xl p-5 md:p-6 border border-[#E8E1D7] space-y-4">
+        <div className="bg-[#FAF8F5] rounded-2xl p-5 border border-[#E8E1D7] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8E1D7] pb-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-white border border-[#E0D6CA] flex items-center justify-center font-bold text-[#8E3B22]">
+              <div className="w-9 h-9 rounded-xl bg-white border border-[#E0D6CA] flex items-center justify-center font-bold text-sm text-[#8E3B22] shadow-2xs">
                 {inspectedDay}
               </div>
               <div>
-                <h3 className="text-base font-bold text-[#2B231F]">{phaseTitle} Rhythm</h3>
+                <h3 className="text-sm font-bold text-[#2B231F]">{phaseTitle} State</h3>
                 <p className="text-xs text-[#7A6F66]">{phaseDesc}</p>
               </div>
             </div>
 
             <span className="text-xs font-semibold text-[#61544B] bg-white px-3 py-1 rounded-full border border-[#E2D8CC]">
-              {matchingLogsForDay.length} Historical Logs recorded around Day {inspectedDay}
+              {matchingLogsForDay.length} Logs recorded around Day {inspectedDay}
             </span>
           </div>
 
@@ -198,11 +265,11 @@ export const MyRhythmsView: React.FC<MyRhythmsViewProps> = ({
                   return (
                     <div
                       key={log.id}
-                      className="bg-white p-3 rounded-xl border border-[#EAE3D9] text-xs space-y-1.5"
+                      className="bg-white p-3 rounded-xl border border-[#EAE3D9] text-xs space-y-1.5 shadow-2xs"
                     >
                       <div className="flex items-center justify-between font-semibold text-[#2C2420]">
                         <span>{cycleLabel}</span>
-                        <span className="text-[#8E3B22]">Day {log.cycleDay}</span>
+                        <span className="text-[#8E3B22] text-[11px]">Day {log.cycleDay}</span>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {log.feelings.map((fId) => (
@@ -228,34 +295,6 @@ export const MyRhythmsView: React.FC<MyRhythmsViewProps> = ({
                 No past logs recorded on Day {inspectedDay} yet. Log how you feel on the Today screen to build this day's rhythm map!
               </p>
             )}
-          </div>
-
-          {/* Biological Hormone Explanation */}
-          <div className="bg-white p-4 rounded-xl border border-[#E8E1D7] flex items-start gap-3">
-            <TrendingUp className="w-4 h-4 text-[#8E3B22] shrink-0 mt-0.5" />
-            <div className="text-xs text-[#4F443C] space-y-1">
-              <p className="font-bold text-[#2B231F]">Hormonal Dynamics at Day {inspectedDay}</p>
-              {inspectedPhase === 'luteal' && (
-                <p>
-                  Progesterone dominates the luteal phase, peaking midway before dropping. This increases caloric burn, alters GABA sensitivity, and causes fluid retention.
-                </p>
-              )}
-              {inspectedPhase === 'ovulatory' && (
-                <p>
-                  Estrogen peaks while LH triggers ovulation. Testosterone also experiences a brief surge, driving confidence, elevated mood, and increased libido.
-                </p>
-              )}
-              {inspectedPhase === 'follicular' && (
-                <p>
-                  Estrogen climbs steadily from post-menses baseline, improving glucose tolerance, mood neurotransmitters, and workout stamina.
-                </p>
-              )}
-              {inspectedPhase === 'menstrual' && (
-                <p>
-                  Estrogen and progesterone drop to baseline levels, prompting the uterine lining to shed. The nervous system naturally seeks quiet, gentle recovery.
-                </p>
-              )}
-            </div>
           </div>
         </div>
       </section>

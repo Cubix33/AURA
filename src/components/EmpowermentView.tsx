@@ -14,7 +14,8 @@ import {
   MessageSquare,
   Send,
   CheckCircle2,
-  Bookmark
+  Bookmark,
+  ArrowRight
 } from 'lucide-react';
 import { OPPORTUNITIES_DATA } from '../data/wellnessData';
 
@@ -84,76 +85,88 @@ export const EmpowermentView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-16">
-      {/* Header Banner */}
-      <section className="bg-gradient-to-br from-[#FAF5F0] via-white to-[#F7EFE8] rounded-3xl p-6 md:p-8 border border-[#EAE0D3] shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-bold tracking-wider uppercase text-[#8E3B22] flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Economics, Leadership & Community
-            </span>
-            <h1 className="font-serif-editorial text-2xl md:text-3xl text-[#2B231F] font-normal">
-              Sovereignty & Growth
+    <div className="space-y-6 max-w-7xl mx-auto pb-16">
+      {/* 1. DOMINANT HERO: Autonomy & Financial Freedom */}
+      <section className="bg-gradient-to-br from-[#2B231F] via-[#352B26] to-[#201A17] text-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#443831] relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#8E3B22] text-white shadow-2xs">
+                <Coins className="w-3.5 h-3.5 text-[#E89E86]" />
+                Financial Sovereignty & Autonomy
+              </span>
+              <span className="text-xs font-semibold text-[#C7BCB3]">
+                Autonomy Engine
+              </span>
+            </div>
+
+            <h1 className="font-serif-editorial text-2xl sm:text-3xl lg:text-4xl text-[#FAF7F2] font-normal leading-snug">
+              Build your personal financial independence cushion
             </h1>
-            <p className="text-xs md:text-sm text-[#6B5E54]">
-              Financial education tools, leadership grants, and verified mentoring spaces that foster long-term autonomy.
+
+            <p className="text-xs sm:text-sm text-[#D1C6BC] leading-relaxed">
+              Financial independence is the foundation of bodily and life autonomy. Model your monthly 50/30/20 split and explore verified STEM bootcamps below.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-2xl border border-[#E8DFD3] shrink-0 self-start md:self-auto shadow-xs">
-            <GraduationCap className="w-5 h-5 text-[#8E3B22]" />
-            <span className="text-xs font-bold text-[#2B231F]">
-              4 Opportunity Hubs Active
+          <div className="bg-white/10 backdrop-blur-md px-5 py-4 rounded-2xl border border-white/15 shrink-0 self-start lg:self-auto text-left lg:text-right">
+            <span className="text-[10px] text-[#E89E86] uppercase font-bold tracking-widest block">
+              Emergency Target
             </span>
+            <div className="text-3xl font-serif-editorial font-bold text-white mt-0.5">
+              ${emergencyFundTarget.toLocaleString()}
+            </div>
+            <p className="text-xs text-[#D1C6BC] mt-0.5">
+              {emergencyMonths} Months Essential Cushion
+            </p>
           </div>
         </div>
-
-        {/* Tab Selection */}
-        <div className="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-[#EFE7DC]">
-          <button
-            onClick={() => setActiveTab('finance')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'finance'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <Coins className="w-3.5 h-3.5" />
-            Financial Sovereignty & 50/30/20 Calculator
-          </button>
-
-          <button
-            onClick={() => setActiveTab('scholarships')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'scholarships'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <GraduationCap className="w-3.5 h-3.5" />
-            Scholarships, Grants & Tech Bootcamps
-          </button>
-
-          <button
-            onClick={() => setActiveTab('community')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === 'community'
-                ? 'bg-[#8E3B22] text-white shadow-xs'
-                : 'bg-white text-[#5E5147] border border-[#E5DDD2] hover:bg-[#F7F1E9]'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            Mentorship & Community Voices
-          </button>
-        </div>
       </section>
+
+      {/* 2. SUB-NAV TABS */}
+      <div className="flex flex-wrap items-center gap-2 bg-[#FAF8F5] p-1.5 rounded-2xl border border-[#EAE3D9]">
+        <button
+          onClick={() => setActiveTab('finance')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'finance'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <Coins className="w-3.5 h-3.5 text-[#8E3B22]" />
+          50/30/20 Budget Calculator & Principles
+        </button>
+
+        <button
+          onClick={() => setActiveTab('scholarships')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'scholarships'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <GraduationCap className="w-3.5 h-3.5 text-[#3E7D59]" />
+          Scholarships & Tech Bootcamps
+        </button>
+
+        <button
+          onClick={() => setActiveTab('community')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            activeTab === 'community'
+              ? 'bg-white text-[#2B231F] shadow-xs border border-[#E0D7CC]'
+              : 'text-[#695D54] hover:text-[#2B231F] hover:bg-white/50'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5 text-[#B84E7D]" />
+          Community Voices & Experiences
+        </button>
+      </div>
 
       {/* TAB 1: FINANCIAL SOVEREIGNTY & CALCULATOR */}
       {activeTab === 'finance' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left: 50/30/20 Budget Interactive Tool */}
-          <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 border border-[#E8E1D7] shadow-xs space-y-6">
+          <div className="lg:col-span-6 bg-white rounded-3xl p-6 sm:p-8 border border-[#E8E1D7] shadow-xs space-y-5">
             <div className="space-y-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E3B22] flex items-center gap-1">
                 <Calculator className="w-3.5 h-3.5" />
