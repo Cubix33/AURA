@@ -27,7 +27,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const [periodLength, setPeriodLength] = useState<number>(currentProfile.averagePeriodLength || 5);
   const [loadSampleData, setLoadSampleData] = useState<boolean>(true);
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    if (isOpen) {
+      if (currentProfile.lastPeriodDate) setLastPeriodDate(currentProfile.lastPeriodDate);
+      if (currentProfile.averageCycleLength) setCycleLength(currentProfile.averageCycleLength);
+      if (currentProfile.averagePeriodLength) setPeriodLength(currentProfile.averagePeriodLength);
+    }
+  }, [isOpen, currentProfile]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +48,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       loadSampleData
     );
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#18120F]/70 backdrop-blur-sm flex min-h-full items-start justify-center p-3 sm:p-6 sm:py-10">

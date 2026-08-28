@@ -109,20 +109,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Profile Edit State
   const [editLastPeriod, setEditLastPeriod] = useState<string>(
-    currentUser?.cycleProfile.lastPeriodDate || lastPeriodDate
+    currentUser?.cycleProfile?.lastPeriodDate || lastPeriodDate
   );
   const [editCycleLength, setEditCycleLength] = useState<number>(
-    currentUser?.cycleProfile.averageCycleLength || 28
+    currentUser?.cycleProfile?.averageCycleLength || 28
   );
   const [editPeriodLength, setEditPeriodLength] = useState<number>(
-    currentUser?.cycleProfile.averagePeriodLength || 5
+    currentUser?.cycleProfile?.averagePeriodLength || 5
   );
   const [profileSavedToast, setProfileSavedToast] = useState<boolean>(false);
-
-  if (!isOpen) return null;
-
   const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>('');
+
+  // Synchronize modal mode and clear errors when opened
+  React.useEffect(() => {
+    if (isOpen) {
+      if (currentUser && !currentUser.isGuest) {
+        setMode('profile');
+      } else {
+        setMode(initialMode || 'register');
+      }
+      setAuthError('');
+      setLoginError('');
+      if (currentUser?.cycleProfile) {
+        setEditLastPeriod(currentUser.cycleProfile.lastPeriodDate || lastPeriodDate);
+        setEditCycleLength(currentUser.cycleProfile.averageCycleLength || 28);
+        setEditPeriodLength(currentUser.cycleProfile.averagePeriodLength || 5);
+      }
+    }
+  }, [isOpen, initialMode, currentUser, lastPeriodDate]);
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals((prev) =>
@@ -487,6 +502,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       onClose();
     }, 1500);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#18120F]/70 backdrop-blur-sm flex min-h-full items-start justify-center p-3 sm:p-6 sm:py-10">
@@ -1013,20 +1030,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <div className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-2xl text-white flex items-center justify-center font-bold text-base shadow-xs"
-                    style={{ backgroundColor: currentUser.avatarColor || '#8E3B22' }}
+                    style={{ backgroundColor: currentUser?.avatarColor || '#8E3B22' }}
                   >
-                    {currentUser.name[0]}
+                    {currentUser?.name?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <div>
                     <h3 className="font-serif-editorial text-base text-[#2B231F] font-bold">
-                      {currentUser.name}
+                      {currentUser?.name || 'AURA Member'}
                     </h3>
-                    <p className="text-xs text-[#7A6E64]">{currentUser.email}</p>
+                    <p className="text-xs text-[#7A6E64]">{currentUser?.email || ''}</p>
                   </div>
                 </div>
 
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF2ED] text-[#8E3B22] border border-[#F2DFD5]">
-                  {currentUser.isGuest ? 'Guest' : 'Active'}
+                  {currentUser?.isGuest ? 'Guest' : 'Active'}
                 </span>
               </div>
 

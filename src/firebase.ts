@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -9,15 +9,48 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
   User as FirebaseUser,
+  Auth,
 } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, query, getDocs, deleteDoc, updateDoc } from 'firebase/firestore';
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  onSnapshot,
+  query,
+  getDocs,
+  deleteDoc,
+  updateDoc,
+  Firestore,
+} from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app: FirebaseApp;
+let db: Firestore;
+let auth: Auth;
+const googleProvider = new GoogleAuthProvider();
 
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || undefined);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  db = getFirestore(app, firebaseConfig.firestoreDatabaseId || undefined);
+  auth = getAuth(app);
+} catch (e) {
+  console.warn('Firebase initialization note:', e);
+  // Fallback default app init if custom database ID fails
+  try {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+    db = getFirestore(app);
+    auth = getAuth(app);
+  } catch (err2) {
+    console.error('Firebase fallback error:', err2);
+    app = {} as any;
+    db = {} as any;
+    auth = {} as any;
+  }
+}
+
+export { app, db, auth, googleProvider };
 
 export enum OperationType {
   CREATE = 'create',
@@ -44,10 +77,10 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
+      userId: auth?.currentUser?.uid,
+      email: auth?.currentUser?.email,
+      emailVerified: auth?.currentUser?.emailVerified,
+      isAnonymous: auth?.currentUser?.isAnonymous,
     },
     operationType,
     path,
@@ -74,4 +107,3 @@ export {
   updateDoc,
 };
 export type { FirebaseUser };
-
