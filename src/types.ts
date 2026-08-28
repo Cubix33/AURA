@@ -37,6 +37,17 @@ export interface UserCycleProfile {
   hasSampleData: boolean;
 }
 
+export interface UserAccount {
+  id: string;
+  name: string;
+  email: string;
+  avatarColor?: string; // Hex color code
+  isGuest?: boolean;
+  createdAt: string; // ISO date string
+  goals?: string[]; // e.g. ['Spot cycle patterns', 'Optimize nutrition', 'Track mood swings']
+  cycleProfile: UserCycleProfile;
+}
+
 export interface MatchedCycleOccurrence {
   cycleNumber: number; // -1, -2, -3, or 0
   cycleLabel: string; // e.g. "Last cycle (Aug)", "2 cycles ago (Jul)"

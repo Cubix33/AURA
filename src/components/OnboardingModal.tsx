@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Sparkles, Calendar, Heart, Shield, Check, Info, X } from 'lucide-react';
+import { AuraLogo } from './AuraLogo';
 import { UserCycleProfile } from '../types';
 
 interface OnboardingModalProps {
@@ -43,12 +44,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#231E1B]/60 backdrop-blur-xs">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#18120F]/70 backdrop-blur-sm flex min-h-full items-start justify-center p-3 sm:p-6 sm:py-10">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full border border-[#EAE2D7] shadow-xl relative overflow-hidden"
+        className="bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full border border-[#EAE2D7] shadow-xl relative overflow-hidden my-auto max-h-[90vh] flex flex-col"
       >
         {/* Subtle decorative glow */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#F3E2D8]/50 rounded-full blur-3xl pointer-events-none" />
@@ -62,13 +63,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </button>
         )}
 
-        {/* Header */}
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-[#F5EAE4] text-[#8E3B22] mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            {isInitialSetup ? 'Welcome to AURA' : 'Cycle Profile Settings'}
+        {/* Header with Aura Logo */}
+        <div className="mb-4 shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <AuraLogo variant="horizontal" size="sm" theme="terracotta" showSubtitle={true} />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#F5EAE4] text-[#8E3B22]">
+              <Sparkles className="w-3.5 h-3.5" />
+              {isInitialSetup ? 'Calibration' : 'Settings'}
+            </div>
           </div>
-          <h2 className="font-serif-editorial text-3xl text-[#2B231F] font-normal">
+          <h2 className="font-serif-editorial text-2xl sm:text-3xl text-[#2B231F] font-normal">
             {isInitialSetup ? 'Why do I feel like this today?' : 'Update Cycle Parameters'}
           </h2>
           <p className="text-xs md:text-sm text-[#6E635A] mt-1">
@@ -76,7 +80,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 pr-1">
           {/* Last Period Start Date */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-[#73665C] mb-1.5">
@@ -175,7 +179,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               className="w-full py-3.5 px-6 rounded-2xl bg-[#8E3B22] text-white font-bold text-sm hover:bg-[#722F1B] active:scale-[0.98] transition-all shadow-sm cursor-pointer flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              {isInitialSetup ? 'Enter AURA Rhythm Tracker' : 'Save Cycle Profile'}
+              <span>{isInitialSetup ? 'Enter AURA Rhythm Tracker' : 'Save Cycle Profile'}</span>
             </button>
           </div>
         </form>

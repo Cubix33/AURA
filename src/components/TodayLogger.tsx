@@ -24,6 +24,7 @@ import { BucketType, DailyLog, PatternInsight, UserCycleProfile } from '../types
 import { calculateCycleDay, detectPatterns, getCyclePhase, getPhaseDescription, getPhaseDisplayName } from '../utils/patternEngine';
 import { PatternInsightCard } from './PatternInsightCard';
 import { TabType } from './Navbar';
+import { AuraLogo } from './AuraLogo';
 
 interface TodayLoggerProps {
   profile: UserCycleProfile;
@@ -261,8 +262,13 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
   return (
     <div className="w-full pb-16 space-y-6">
       {/* Top Banner: Editorial Hero Bar */}
-      <div className="bg-gradient-to-r from-[#2B231F] via-[#382E29] to-[#251E1A] rounded-2xl p-5 sm:p-6 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-[#483B33]">
-        <div className="space-y-1">
+      <div className="bg-gradient-to-r from-[#2B231F] via-[#382E29] to-[#251E1A] rounded-2xl p-5 sm:p-6 text-white shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-[#483B33] relative overflow-hidden">
+        {/* Subtle celestial watermark glow */}
+        <div className="absolute right-0 top-0 translate-x-12 -translate-y-6 opacity-10 pointer-events-none hidden md:block">
+          <AuraLogo variant="icon" size="xl" theme="white" iconClassName="w-48 h-48" />
+        </div>
+
+        <div className="space-y-1 relative z-10">
           <div className="flex items-center gap-2">
             <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full bg-[#8E3B22] text-[#F9ECE7]">
               Cycle Sync & Insights
@@ -278,7 +284,7 @@ export const TodayLogger: React.FC<TodayLoggerProps> = ({
         </div>
 
         {/* Phase Pill Badge */}
-        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/15 shrink-0 self-stretch md:self-auto justify-between md:justify-start">
+        <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/15 shrink-0 self-stretch md:self-auto justify-between md:justify-start relative z-10">
           <div>
             <span className="text-[10px] text-[#C7BCB3] uppercase font-semibold block leading-none">Current Phase</span>
             <p className="text-sm font-bold text-white mt-1 leading-none">{phaseName}</p>

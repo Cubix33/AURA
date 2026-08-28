@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { getAllBodyReceipts } from '../utils/patternEngine';
 import { DailyLog } from '../types';
+import { AuraLogo } from './AuraLogo';
 
 interface BodyReceiptsViewProps {
   allLogs: DailyLog[];
@@ -51,6 +52,11 @@ export const BodyReceiptsView: React.FC<BodyReceiptsViewProps> = ({
       {/* 1. DOMINANT HERO: Top Verified Rhythm */}
       {dominantReceipt && (
         <section className="bg-gradient-to-br from-[#2B231F] via-[#352B26] to-[#201A17] text-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#443831] relative overflow-hidden">
+          {/* Subtle celestial watermark glow */}
+          <div className="absolute right-0 top-0 translate-x-12 -translate-y-6 opacity-10 pointer-events-none hidden md:block">
+            <AuraLogo variant="icon" size="xl" theme="white" iconClassName="w-56 h-56" />
+          </div>
+
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="space-y-2 max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">

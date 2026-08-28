@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with cycle tracking baseline and preferences",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID (matches auth.uid)" },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "avatarColor": { "type": "string", "maxLength": 30 },
+        "lastPeriodDate": { "type": "string", "maxLength": 30 },
+        "cycleLength": { "type": "number" },
+        "periodLength": { "type": "number" },
+        "lutealLength": { "type": "number" },
+        "goals": { "type": "array" },
+        "onboardingCompleted": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "email"]
+    },
+    "Receipt": {
+      "title": "Receipt",
+      "description": "Daily logged health check-in receipt",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 30 },
+        "cycleDay": { "type": "number" },
+        "phase": { "type": "string", "maxLength": 50 },
+        "metrics": { "type": "object" },
+        "timestamp": { "type": "string" },
+        "tags": { "type": "array" }
+      },
+      "required": ["id", "userId", "date", "phase"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores user profile and cycle configuration"
+    },
+    "/users/{userId}/receipts/{receiptId}": {
+      "schema": "Receipt",
+      "description": "Stores individual daily health receipts logged by the user"
+    }
+  }
+}
