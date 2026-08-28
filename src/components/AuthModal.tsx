@@ -153,7 +153,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setAuthError('Please enter your name and email address.');
         return;
       }
-      if (password.trim() && password.trim().length < 6) {
+      if (!password.trim() || password.trim().length < 6) {
         setAuthError('Password must be at least 6 characters long.');
         return;
       }
@@ -166,38 +166,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     let assignedId = 'usr_' + Date.now();
     let fbUser: any = null;
 
-    if (password.trim().length >= 6) {
-      try {
-        const userCred = await createUserWithEmailAndPassword(auth, email.trim(), password.trim());
-        fbUser = userCred.user;
-        assignedId = fbUser.uid;
-        if (name.trim()) {
-          try {
-            await updateProfile(fbUser, { displayName: name.trim() });
-          } catch (e) {
-            // Profile display name update optional
-          }
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, email.trim(), password.trim());
+      fbUser = userCred.user;
+      assignedId = fbUser.uid;
+      if (name.trim()) {
+        try {
+          await updateProfile(fbUser, { displayName: name.trim() });
+        } catch (e) {
+          // Profile display name update optional
         }
-      } catch (fbErr: any) {
-        console.warn('Firebase registration note:', fbErr);
-        if (fbErr.code === 'auth/email-already-in-use') {
-          // If already registered, try signing in with this password
-          try {
-            const loginCred = await signInWithEmailAndPassword(auth, email.trim(), password.trim());
-            fbUser = loginCred.user;
-            assignedId = fbUser.uid;
-          } catch (loginErr) {
-            setIsAuthenticating(false);
-            setAuthError('This email is already registered with a different password. Please sign in or use another email.');
-            setRegisterStep(1);
-            return;
-          }
-        } else if (fbErr.code === 'auth/weak-password') {
-          setIsAuthenticating(false);
-          setAuthError('Password is too weak. Please use at least 6 characters.');
-          setRegisterStep(1);
-          return;
-        }
+      }
+    } catch (fbErr: any) {
+      console.warn('Firebase registration error:', fbErr);
+      if (fbErr.code === 'auth/email-already-in-use') {
+        setIsAuthenticating(false);
+        setAuthError('An account with this email already exists. Please go to Sign In or use another email.');
+        setRegisterStep(1);
+        return;
+      } else if (fbErr.code === 'auth/weak-password') {
+        setIsAuthenticating(false);
+        setAuthError('Password is too weak. Please use at least 6 characters.');
+        setRegisterStep(1);
+        return;
+      } else if (fbErr.code === 'auth/invalid-email') {
+        setIsAuthenticating(false);
+        setAuthError('Please enter a valid email address.');
+        setRegisterStep(1);
+        return;
+      } else {
+        // Fallback for offline mode: record in local storage
+        console.warn('Firebase registration offline fallback:', fbErr.message);
       }
     }
 
@@ -332,119 +331,73 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setLoginError('Please enter your email address');
       return;
     }
+    if (!loginPassword.trim()) {
+      setLoginError('Please enter your password');
+      return;
+    }
 
     setIsAuthenticating(true);
 
-    // Try Firebase Authentication if password provided
-    if (loginPassword.trim()) {
+    try {
+      const userCred = await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword.trim());
+      const uid = userCred.user.uid;
+
+      // Fetch user document from Firestore
+      let userDocData: any = null;
       try {
-        const userCred = await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword.trim());
-        const uid = userCred.user.uid;
-
-        // Fetch user document from Firestore
-        let userDocData: any = null;
-        try {
-          const snap = await getDoc(doc(db, 'users', uid));
-          if (snap.exists()) {
-            userDocData = snap.data();
-          }
-        } catch (dbErr) {
-          console.warn('Firestore fetch warning:', dbErr);
+        const snap = await getDoc(doc(db, 'users', uid));
+        if (snap.exists()) {
+          userDocData = snap.data();
         }
-
-        const foundAccount: UserAccount = {
-          id: uid,
-          name: userDocData?.name || userCred.user.displayName || loginEmail.split('@')[0],
-          email: userCred.user.email || loginEmail.trim().toLowerCase(),
-          avatarColor: userDocData?.avatarColor || '#8E3B22',
-          isGuest: false,
-          createdAt: userDocData?.createdAt || new Date().toISOString(),
-          goals: userDocData?.goals || ['Spot hormonal symptom patterns', 'Sync nutrition with cycle phases'],
-          cycleProfile: userDocData
-            ? {
-                lastPeriodDate: userDocData.lastPeriodDate || new Date(Date.now() - 17 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                averageCycleLength: userDocData.cycleLength || 28,
-                averagePeriodLength: userDocData.periodLength || 5,
-                onboardingCompleted: true,
-                hasSampleData: true,
-              }
-            : {
-                lastPeriodDate: new Date(Date.now() - 17 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                averageCycleLength: 28,
-                averagePeriodLength: 5,
-                onboardingCompleted: true,
-                hasSampleData: true,
-              },
-        };
-
-        setIsAuthenticating(false);
-        onLogin(foundAccount);
-        onClose();
-        return;
-      } catch (fbLoginErr: any) {
-        console.warn('Firebase login attempt:', fbLoginErr);
-        // If wrong password specifically in Firebase, inform user
-        if (fbLoginErr.code === 'auth/wrong-password' || fbLoginErr.code === 'auth/invalid-credential') {
-          // Check local stored accounts first as fallback
-          const savedAccountsRaw = localStorage.getItem('aura_registered_accounts_v1');
-          if (savedAccountsRaw) {
-            try {
-              const accounts: UserAccount[] = JSON.parse(savedAccountsRaw);
-              const localMatch = accounts.find((a) => a.email.toLowerCase() === loginEmail.trim().toLowerCase());
-              if (localMatch) {
-                setIsAuthenticating(false);
-                onLogin(localMatch);
-                onClose();
-                return;
-              }
-            } catch (err) {
-              // ignore
-            }
-          }
-          setIsAuthenticating(false);
-          setLoginError('Invalid email or password. Please check your credentials or register a new account.');
-          return;
-        }
+      } catch (dbErr) {
+        console.warn('Firestore fetch warning:', dbErr);
       }
-    }
 
-    // Check existing stored accounts in localStorage
-    const savedAccountsRaw = localStorage.getItem('aura_registered_accounts_v1');
-    let foundAccount: UserAccount | null = null;
-
-    if (savedAccountsRaw) {
-      try {
-        const accounts: UserAccount[] = JSON.parse(savedAccountsRaw);
-        foundAccount =
-          accounts.find((a) => a.email.toLowerCase() === loginEmail.trim().toLowerCase()) || null;
-      } catch (err) {
-        // Fallback
-      }
-    }
-
-    if (!foundAccount) {
-      // Auto-create or login with entered details for smooth experience
-      foundAccount = {
-        id: 'usr_' + Date.now(),
-        name: loginEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
-        email: loginEmail.trim().toLowerCase(),
-        avatarColor: '#8E3B22',
+      const foundAccount: UserAccount = {
+        id: uid,
+        name: userDocData?.name || userCred.user.displayName || loginEmail.split('@')[0],
+        email: userCred.user.email || loginEmail.trim().toLowerCase(),
+        avatarColor: userDocData?.avatarColor || '#8E3B22',
         isGuest: false,
-        createdAt: new Date().toISOString(),
-        goals: ['Spot hormonal symptom patterns', 'Sync nutrition with cycle phases'],
-        cycleProfile: {
-          lastPeriodDate: new Date(Date.now() - 17 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          averageCycleLength: 28,
-          averagePeriodLength: 5,
-          onboardingCompleted: true,
-          hasSampleData: true,
-        },
+        createdAt: userDocData?.createdAt || new Date().toISOString(),
+        goals: userDocData?.goals || ['Spot hormonal symptom patterns', 'Sync nutrition with cycle phases'],
+        cycleProfile: userDocData
+          ? {
+              lastPeriodDate: userDocData.lastPeriodDate || new Date(Date.now() - 17 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              averageCycleLength: userDocData.cycleLength || 28,
+              averagePeriodLength: userDocData.periodLength || 5,
+              onboardingCompleted: true,
+              hasSampleData: true,
+            }
+          : {
+              lastPeriodDate: new Date(Date.now() - 17 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              averageCycleLength: 28,
+              averagePeriodLength: 5,
+              onboardingCompleted: true,
+              hasSampleData: true,
+            },
       };
-    }
 
-    setIsAuthenticating(false);
-    onLogin(foundAccount);
-    onClose();
+      setIsAuthenticating(false);
+      onLogin(foundAccount);
+      onClose();
+    } catch (fbLoginErr: any) {
+      console.warn('Firebase login attempt:', fbLoginErr);
+      setIsAuthenticating(false);
+      if (
+        fbLoginErr.code === 'auth/wrong-password' ||
+        fbLoginErr.code === 'auth/invalid-credential' ||
+        fbLoginErr.code === 'auth/user-not-found'
+      ) {
+        setLoginError('Incorrect email or password. Please check your credentials or create a new account.');
+      } else if (fbLoginErr.code === 'auth/too-many-requests') {
+        setLoginError('Too many failed attempts. Please reset your password or try again in a few minutes.');
+      } else if (fbLoginErr.code === 'auth/invalid-email') {
+        setLoginError('Please enter a valid email address.');
+      } else {
+        setLoginError(fbLoginErr.message || 'Unable to sign in. Please verify your email and password.');
+      }
+    }
   };
 
   const handleQuickDemoLogin = (demoName: string, demoEmail: string) => {
